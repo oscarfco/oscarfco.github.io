@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bounding Box Capture</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Leaflet CSS (no integrity to avoid SRI errors) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    crossorigin=""
+  />
+  
+  <!-- Leaflet.draw CSS (no integrity) -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
+  />
+</head>
+<body>
+  <button id="captureBtn">Capture Bounding Box</button>
+  <button id="polygonBtn"><i class="fas fa-draw-polygon"></i></button>
+  <button id="deleteBtn"><i class="fas fa-trash"></i></button>
+  <div class="grid-control">
+    <label for="gridSize">Grid Size (degrees):</label>
+    <div class="grid-input-container">
+        <input type="range" id="gridSize" min="0.01" max="1" step="0.01" value="0.05">
+        <input type="number" id="gridSizeManual" min="0.01" max="1" step="0.01" value="0.05">
+    </div>
+    <div id="gridWarning" class="grid-warning">
+        Draw a polygon to see box count
+    </div>
+  </div>
+  <div id="map"></div>
+  <div id="info"></div>
+  
+  <!-- Leaflet JS (no integrity) -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  
+  <!-- Leaflet.draw JS (no integrity) -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
+  ></script>
+  
+  <!-- Custom JS -->
+  <script src="script.js"></script>
+</body>
+</html>
