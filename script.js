@@ -399,3 +399,40 @@ document.getElementById('deleteBtn').addEventListener('click', function() {
   // Clear the info div
   document.getElementById('info').innerHTML = '';
 });
+
+// Wait for DOM to be fully loaded before initializing modal
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById("helpModal");
+    const helpBtn = document.getElementById("helpBtn");
+    const closeBtn = document.getElementsByClassName("close")[0];
+
+    // Add console logs to debug
+    console.log('Modal:', modal);
+    console.log('Help Button:', helpBtn);
+    console.log('Close Button:', closeBtn);
+
+    // Only set up modal events if the elements exist
+    if (modal && helpBtn && closeBtn) {
+        helpBtn.onclick = function() {
+            console.log('Help button clicked');
+            modal.style.display = "block";
+        }
+
+        closeBtn.onclick = function() {
+            console.log('Close button clicked');
+            modal.style.display = "none";
+        }
+
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        });
+    } else {
+        console.error('One or more modal elements not found:', {
+            modal: !!modal,
+            helpBtn: !!helpBtn,
+            closeBtn: !!closeBtn
+        });
+    }
+});

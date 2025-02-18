@@ -28,6 +28,7 @@
   <button id="captureBtn">Capture Bounding Box</button>
   <button id="polygonBtn"><i class="fas fa-draw-polygon"></i></button>
   <button id="deleteBtn"><i class="fas fa-trash"></i></button>
+  <button id="helpBtn" class="help-btn"><i class="fas fa-question-circle"></i></button>
   <div class="grid-control">
     <label for="gridSize">Grid Size (degrees):</label>
     <div class="grid-input-container">
@@ -54,5 +55,35 @@
   
   <!-- Custom JS -->
   <script src="script.js"></script>
+  
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>How to Use</h2>
+      <div class="instructions">
+        <h3>Drawing Tools</h3>
+        <ul>
+          <li><i class="fas fa-draw-polygon"></i> <strong>Draw Polygon:</strong> Click to draw a custom shape. Click points to create vertices and double-click to finish.</li>
+          <li><strong>Capture Bounding Box:</strong> Click to draw a rectangular bounding box by clicking and dragging.</li>
+          <li><i class="fas fa-trash"></i> <strong>Delete:</strong> Remove all drawn shapes from the map.</li>
+        </ul>
+
+        <h3>Grid Controls</h3>
+        <ul>
+          <li>Use the slider or input box to adjust the grid size (in degrees)</li>
+          <li>The grid will automatically update when a polygon is drawn</li>
+          <li>A warning will appear if the grid size would create too many boxes</li>
+        </ul>
+
+        <h3>Output</h3>
+        <ul>
+          <li>View coordinates in both JSON and Python formats</li>
+          <li>Use the copy buttons to copy the formatted data to your clipboard</li>
+          <li>For polygons, the output includes all grid boxes that intersect with the shape</li>
+          <li>For bounding boxes, the output includes the four corner coordinates</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
