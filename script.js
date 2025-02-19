@@ -313,10 +313,19 @@ map.on(L.Draw.Event.CREATED, function (e) {
     var bounds = layer.getBounds();
     var northEast = bounds.getNorthEast();
     var southWest = bounds.getSouthWest();
-    var northWest = L.latLng(northEast.lat, southWest.lng);
-    var southEast = L.latLng(southWest.lat, northEast.lng);
+    console.log(bounds);
     
-    // Build JSON object
+    // Normalize longitude values to be within -180 to 180
+    var neLng = ((northEast.lng + 180) % 360) - 180;
+    var swLng = ((southWest.lng + 180) % 360) - 180;
+    console.log(neLng);
+    console.log(swLng);
+    
+    // Create corner points with normalized longitudes
+    var northWest = L.latLng(northEast.lat, swLng);
+    var southEast = L.latLng(southWest.lat, neLng);
+    
+    // Build JSON object with normalized coordinates
     var boundingBoxJSON = {
       north_west: {
         lat: northWest.lat.toFixed(5),
@@ -324,7 +333,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
       },
       north_east: {
         lat: northEast.lat.toFixed(5),
-        lng: northEast.lng.toFixed(5)
+        lng: neLng.toFixed(5)
       },
       south_east: {
         lat: southEast.lat.toFixed(5),
@@ -332,7 +341,7 @@ map.on(L.Draw.Event.CREATED, function (e) {
       },
       south_west: {
         lat: southWest.lat.toFixed(5),
-        lng: southWest.lng.toFixed(5)
+        lng: swLng.toFixed(5)
       }
     };
     
@@ -340,9 +349,9 @@ map.on(L.Draw.Event.CREATED, function (e) {
     var pythonOutput = 
       "bounding_box = {\n" +
       `    "north_west": {"lat": ${northWest.lat.toFixed(5)}, "lng": ${northWest.lng.toFixed(5)}},\n` +
-      `    "north_east": {"lat": ${northEast.lat.toFixed(5)}, "lng": ${northEast.lng.toFixed(5)}},\n` +
+      `    "north_east": {"lat": ${northEast.lat.toFixed(5)}, "lng": ${neLng.toFixed(5)}},\n` +
       `    "south_east": {"lat": ${southEast.lat.toFixed(5)}, "lng": ${southEast.lng.toFixed(5)}},\n` +
-      `    "south_west": {"lat": ${southWest.lat.toFixed(5)}, "lng": ${southWest.lng.toFixed(5)}}\n` +
+      `    "south_west": {"lat": ${southWest.lat.toFixed(5)}, "lng": ${swLng.toFixed(5)}}\n` +
       "}";
 
     // Update the info div
@@ -350,9 +359,9 @@ map.on(L.Draw.Event.CREATED, function (e) {
     infoDiv.innerHTML = `
       <h3>Bounding Box Coordinates:</h3>
       <p><strong>North-West:</strong> ${northWest.lat.toFixed(5)}, ${northWest.lng.toFixed(5)}</p>
-      <p><strong>North-East:</strong> ${northEast.lat.toFixed(5)}, ${northEast.lng.toFixed(5)}</p>
+      <p><strong>North-East:</strong> ${northEast.lat.toFixed(5)}, ${neLng.toFixed(5)}</p>
       <p><strong>South-East:</strong> ${southEast.lat.toFixed(5)}, ${southEast.lng.toFixed(5)}</p>
-      <p><strong>South-West:</strong> ${southWest.lat.toFixed(5)}, ${southWest.lng.toFixed(5)}</p>
+      <p><strong>South-West:</strong> ${southWest.lat.toFixed(5)}, ${swLng.toFixed(5)}</p>
       
       <div class="output-section">
         <h4>JSON</h4>
