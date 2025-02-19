@@ -32,8 +32,8 @@
   <div class="grid-control">
     <label for="gridSize">Grid Size (degrees):</label>
     <div class="grid-input-container">
-        <input type="range" id="gridSize" min="0.01" max="1" step="0.01" value="1">
-        <input type="number" id="gridSizeManual" min="0.01" max="1" step="0.01" value="1">
+        <input type="range" id="gridSize" min="0.01" max="10" step="0.01" value="1">
+        <input type="number" id="gridSizeManual" min="0.01" max="10" step="0.01" value="1">
     </div>
     <div id="gridWarning" class="grid-warning">
         Draw a polygon to see box count
@@ -70,6 +70,7 @@
 
         <h3>Grid Controls</h3>
         <ul>
+          <li>The slider will be enabled when drawing a polygon</li>
           <li>Use the slider or input box to adjust the grid size (in degrees)</li>
           <li>The grid will automatically update when a polygon is drawn</li>
           <li>A warning will appear if the grid size would create too many boxes</li>

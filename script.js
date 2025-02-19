@@ -47,11 +47,15 @@ var polygonDrawOptions = {
 
 // When the "Draw Polygon" button is clicked
 document.getElementById('polygonBtn').addEventListener('click', function() {
+  // Enable grid controls when drawing polygon
+  enableGridControls();
   new L.Draw.Polygon(map, polygonDrawOptions).enable();
 });
 
 // When the "Capture Bounding Box" button is clicked
 document.getElementById('captureBtn').addEventListener('click', function() {
+  // Disable grid controls when drawing bounding box
+  disableGridControls();
   new L.Draw.Rectangle(map).enable();
 });
 
@@ -300,9 +304,11 @@ map.on(L.Draw.Event.CREATED, function (e) {
   drawnItems.addLayer(layer);
   
   if (shape === 'polygon') {
+    enableGridControls();
     redrawGrid(layer);
   }
   else if (shape === 'rectangle') {
+    disableGridControls();
     // Get the bounds of the rectangle
     var bounds = layer.getBounds();
     var northEast = bounds.getNorthEast();
@@ -398,6 +404,7 @@ document.getElementById('deleteBtn').addEventListener('click', function() {
   
   // Clear the info div
   document.getElementById('info').innerHTML = '';
+  disableGridControls();
 });
 
 // Wait for DOM to be fully loaded before initializing modal
@@ -435,4 +442,33 @@ document.addEventListener('DOMContentLoaded', function() {
             closeBtn: !!closeBtn
         });
     }
+
+    // Position help button below zoom controls
+    const zoomOutButton = document.querySelector('.leaflet-control-zoom-out');
+    
+    if (zoomOutButton && helpBtn) {
+        const zoomRect = zoomOutButton.getBoundingClientRect();
+        const zoomBottom = zoomRect.bottom;
+        
+        helpBtn.style.top = (zoomBottom + 10) + 'px'; // 10px gap below zoom
+        helpBtn.style.left = zoomRect.left + 'px';
+    }
+
+    // Initialize with disabled controls
+    disableGridControls();
 });
+
+// Add functions to enable/disable grid controls
+function disableGridControls() {
+    gridSizeSlider.disabled = true;
+    gridSizeManual.disabled = true;
+    document.querySelector('.grid-control').style.opacity = '0.5';
+    document.getElementById('gridWarning').textContent = 'Grid controls only available for polygons';
+}
+
+function enableGridControls() {
+    gridSizeSlider.disabled = false;
+    gridSizeManual.disabled = false;
+    document.querySelector('.grid-control').style.opacity = '1';
+    document.getElementById('gridWarning').textContent = 'Draw a polygon to see box count';
+}
