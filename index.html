@@ -23,6 +23,27 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
   />
+  
+    <!-- H3 library for hexagonal grid system -->
+    <script src="https://unpkg.com/h3-js"></script>
+    <script>
+      // Test H3 functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof h3 !== 'undefined') {
+          try {
+            const testLat = 37.7749;
+            const testLng = -122.4194;
+            const testRes = 9;
+            const h3Index = h3.latLngToCell(testLat, testLng, testRes);
+            console.log("H3 test successful:", h3Index);
+          } catch (e) {
+            console.error("H3 test failed:", e);
+          }
+        } else {
+          console.error("H3 library not loaded properly");
+        }
+      });
+    </script>
 </head>
 <body>
   <button id="captureBtn">Capture Bounding Box</button>
@@ -30,13 +51,39 @@
   <button id="deleteBtn"><i class="fas fa-trash"></i></button>
   <button id="helpBtn" class="help-btn"><i class="fas fa-question-circle"></i></button>
   <div class="grid-control">
-    <label for="gridSize">Grid Size (degrees):</label>
-    <div class="grid-input-container">
+    <label for="tileType">Tile Type:</label>
+    <select id="tileType">
+      <option value="rectangle">Rectangular Grid</option>
+      <option value="h3">H3 Hexagons</option>
+    </select>
+    
+    <div id="gridSizeContainer">
+      <label for="gridSize">Grid Size (degrees):</label>
+      <div class="grid-input-container">
         <input type="range" id="gridSize" min="0.01" max="10" step="0.01" value="1">
         <input type="number" id="gridSizeManual" min="0.01" max="10" step="0.01" value="1">
+      </div>
     </div>
+    
+    <div id="h3ResolutionContainer" style="display: none;">
+      <label for="h3Resolution">H3 Resolution:</label>
+      <select id="h3Resolution">
+        <option value="0">0 - ~1107.71 km</option>
+        <option value="1">1 - ~418.68 km</option>
+        <option value="2">2 - ~158.24 km</option>
+        <option value="3">3 - ~59.81 km</option>
+        <option value="4">4 - ~22.61 km</option>
+        <option value="5">5 - ~8.54 km</option>
+        <option value="6">6 - ~3.23 km</option>
+        <option value="7">7 - ~1.22 km</option>
+        <option value="8" selected>8 - ~461.35 m</option>
+        <option value="9">9 - ~174.38 m</option>
+        <option value="10">10 - ~65.91 m</option>
+      </select>
+    </div>
+    
     <div id="gridWarning" class="grid-warning">
-        Draw a polygon to see box count
+      Draw a polygon to see box count
     </div>
   </div>
   <div id="map"></div>
@@ -59,30 +106,62 @@
   <div id="helpModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <h2>How to Use</h2>
+      <h2>Quick Guide</h2>
       <div class="instructions">
-        <h3>Drawing Tools</h3>
-        <ul>
-          <li><i class="fas fa-draw-polygon"></i> <strong>Draw Polygon:</strong> Click to draw a custom shape. Click points to create vertices and double-click to finish.</li>
-          <li><strong>Capture Bounding Box:</strong> Click to draw a rectangular bounding box by clicking and dragging.</li>
-          <li><i class="fas fa-trash"></i> <strong>Delete:</strong> Remove all drawn shapes from the map.</li>
-        </ul>
+        <div class="help-section">
+          <h3>Drawing Tools</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <h4>Draw Polygon</h4>
+              <p>Click points for vertices, double-click to finish. Enables grid creation.</p>
+            </div>
+            <div class="help-item">
+              <h4>Bounding Box</h4>
+              <p>Click and drag for a simple rectangular area.</p>
+            </div>
+          </div>
+        </div>
 
-        <h3>Grid Controls</h3>
-        <ul>
-          <li>The slider will be enabled when drawing a polygon</li>
-          <li>Use the slider or input box to adjust the grid size (in degrees)</li>
-          <li>The grid will automatically update when a polygon is drawn</li>
-          <li>A warning will appear if the grid size would create too many boxes</li>
-        </ul>
+        <div class="help-section">
+          <h3>Grid Types for Polygons</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <h4>Rectangular</h4>
+              <p>Adjust size with slider. Creates grid of rectangles.</p>
+            </div>
+            <div class="help-item">
+              <h4>H3 Hexagons</h4>
+              <p>Tiles the polygon with h3 hexagons. <br><br>
+                 Choose a resolution from the dropdown. <br><br>
+                 It won't display resolutions where more than 2000 hexagons would be created. <br><br>
+                Click a hexagon to copy its ID to the clipboard.</p>
+            </div>
+          </div>
+        </div>
 
-        <h3>Output</h3>
-        <ul>
-          <li>View coordinates in both JSON and Python formats</li>
-          <li>Use the copy buttons to copy the formatted data to your clipboard</li>
-          <li>For polygons, the output includes all grid boxes that intersect with the shape</li>
-          <li>For bounding boxes, the output includes the four corner coordinates</li>
-        </ul>
+        <div class="help-section">
+          <h3>Output</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <h4>Formats</h4>
+              <p>Copy bounding box or polygon data in the following formats:
+                 <strong>JSON, Python, SQL</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>SQL Options</h3>
+          <div class="help-grid">
+            <div class="help-item">
+              <h4>Configuration</h4>
+              <p>Enter table name and column names, then click <i>Update SQL</i></p>
+            </div>
+          </div>
+        </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

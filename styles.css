@@ -194,50 +194,58 @@ body {
     background: #f8f8f8;
   }
   
+  /* Smaller Modal Styling */
   .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 9999;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    overflow: hidden; /* Prevent outer scrolling */
   }
   
   .modal-content {
     background-color: #fefefe;
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
+    margin: 10vh auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    width: 70%;
+    max-width: 500px; /* Reduced from 800px */
+    max-height: 80vh; /* Reduced from 90vh */
+    overflow-y: auto;
     border-radius: 5px;
     position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
   
+  /* Ensure close button is always visible */
   .close {
-    color: #aaa;
+    position: sticky;
+    top: 0;
+    right: 0;
     float: right;
+    color: #aaa;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    z-index: 1;
+    background-color: #fefefe; /* Match modal background */
+    padding-left: 10px;
   }
   
   .close:hover,
   .close:focus {
     color: black;
     text-decoration: none;
-    cursor: pointer;
   }
   
-  /* Make sure modal appears above map */
-  #helpModal {
-    z-index: 9999;
-  }
-  
+  /* Make the instructions section fit well */
   .instructions {
     margin-top: 20px;
+    padding-bottom: 10px; /* Add some padding at bottom for better scrolling */
   }
   
   .instructions h3 {
@@ -258,5 +266,95 @@ body {
   .instructions i {
     margin-right: 8px;
     color: #4CAF50;
+  }
+  
+  .grid-control select {
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+  }
+  
+  #h3ResolutionContainer {
+    margin-top: 10px;
+  }
+  
+  #h3ResolutionContainer select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-height: 600px) {
+    .modal-content {
+      margin: 2vh auto; /* Less top margin on small screens */
+      max-height: 96vh; /* More height on small screens */
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .help-grid {
+      grid-template-columns: 1fr; /* Single column on small screens */
+    }
+    
+    .modal-content {
+      width: 95%; /* Wider on mobile */
+      padding: 15px;
+    }
+  }
+  
+  .help-section {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+  
+  .help-section h3 {
+    color: #333;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  
+  .help-item {
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    padding: 10px;
+  }
+  
+  .help-item h4 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .help-item p {
+    margin: 6px 0;
+    line-height: 1.3;
+    font-size: 13px;
+  }
+  
+  .compact-list {
+    padding-left: 15px;
+    margin: 6px 0;
+  }
+  
+  .compact-list li {
+    margin: 4px 0;
+    line-height: 1.2;
+    font-size: 13px;
   }
   
