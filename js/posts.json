@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2025-03-26",
+    "title": "📄 Paper Highlight 6 – SFT Memorizes, RL Generalizes",
+    "slug": "paper_highlight_6_rl_vs_sft",
+    "excerpt": "A comparative study of foundation model post-training strategies, examining how supervised fine-tuning leads to memorization while reinforcement learning promotes generalization."
+  },
+  {
+    "date": "2025-01-15",
+    "title": "📄 Paper Highlight 5 – DeepSeek-R1: Incentivizing Reasoning Capability in LLMs",
+    "slug": "paper_highlight_5_deepseek",
+    "excerpt": "A review of DeepSeek's groundbreaking reasoning models that outperformed OpenAI at lower cost through innovative reinforcement learning techniques and open-source transparency."
+  },
+  {
+    "date": "2024-12-10",
+    "title": "Effective Fine-tuning Strategies for Foundation Models",
+    "slug": "2024-12-10-fine-tuning-strategies",
+    "excerpt": "A comprehensive guide to different approaches for fine-tuning large language models with pros and cons of each method."
+  }
+]

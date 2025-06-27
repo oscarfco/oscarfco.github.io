@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building My First Project with React and Node.js - Oscar's Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="post.html">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">May 15, 2023</div>
+                <h1 class="single-post-title">Building My First Project with React and Node.js</h1>
+            </header>
+            
+            <div class="single-post-content">
+                <p>Over the past month, I've been working on building a full-stack application using React for the frontend and Node.js for the backend. The journey was both challenging and rewarding, and I wanted to share my experience with fellow developers who might be embarking on a similar path.</p>
+                
+                <h2>Getting Started</h2>
+                <p>When I first decided to build this project, I had some experience with React but was relatively new to Node.js. I started by setting up my development environment and creating the basic project structure. Here's how I organized my project:</p>
+                
+                <pre><code>project-root/
+├── client/          # React frontend
+│   ├── public/
+│   └── src/
+└── server/          # Node.js backend
+    ├── controllers/
+    ├── models/
+    └── routes/</code></pre>
+                
+                <p>This separation allowed me to develop the frontend and backend independently while keeping them in the same repository.</p>
+                
+                <h2>Challenges Faced</h2>
+                <p>One of the biggest challenges I faced was setting up the communication between the frontend and backend. After some research, I decided to use Axios for making HTTP requests from React to my Node.js API.</p>
+                
+                <p>Another hurdle was implementing authentication. I opted for JWT (JSON Web Tokens) and spent quite a bit of time understanding how to properly implement them in both React and Node.js.</p>
+                
+                <h2>Key Learnings</h2>
+                <p>Through this project, I gained valuable insights into full-stack development:</p>
+                
+                <ul>
+                    <li><strong>State Management:</strong> I learned how to effectively manage state in React using the Context API, which helped me avoid prop drilling.</li>
+                    <li><strong>Middleware in Express:</strong> I discovered how powerful middleware can be in Express.js for handling authentication, logging, and error handling.</li>
+                    <li><strong>Database Design:</strong> I spent time thinking about how to structure my MongoDB collections efficiently.</li>
+                    <li><strong>Error Handling:</strong> I implemented proper error handling on both the client and server, which saved me countless hours of debugging.</li>
+                </ul>
+                
+                <h2>Final Thoughts</h2>
+                <p>Building this project was an incredible learning experience. Not only did I improve my technical skills, but I also gained confidence in my ability to create full-stack applications from scratch.</p>
+                
+                <p>If you're considering starting a similar project, my advice would be to break it down into smaller, manageable pieces and tackle them one at a time. Don't be afraid to make mistakes – they're often the best teachers.</p>
+                
+                <p>I'm planning to open-source this project soon, so keep an eye on my GitHub if you're interested in checking out the code.</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">The Books That Changed My Perspective on Software Development</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">Lessons Learned After a Year of Remote Work</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2023 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html> 

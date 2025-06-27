@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building My First Project with React and Node.js - John's Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">May 15, 2023</div>
+                <h1 class="single-post-title">Building My First Project with React and Node.js</h1>
+            </header>
+            
+            <div class="single-post-content">
+                <p>Over the past month, I've been working on building a full-stack application using React for the frontend and Node.js for the backend. The journey was both challenging and rewarding, and I wanted to share my experience with fellow developers who might be embarking on a similar path.</p>
+                
+                <h2>Getting Started</h2>
+                <p>When I first decided to build this project, I had some experience with React but was relatively new to Node.js. I started by setting up my development environment and creating the basic project structure. Here's how I organized my project:</p>
+                
+                <pre><code>project-root/
+├── client/          # React frontend
+│   ├── public/
+│   └── src/
+└── server/          # Node.js backend
+    ├── controllers/
+    ├── models/
+    └── routes/</code></pre>
+                
+                <p>This separation allowed me to develop the frontend and backend independently while keeping them in the same repository.</p>
+                
+                <h2>Challenges Faced</h2>
+                <p>One of the biggest challenges I faced was setting up the communication between the frontend and backend. After some research, I decided to use Axios for making HTTP requests from React to my Node.js API.</p>
+                
+                <p>Another hurdle was implementing authentication. I opted for JWT (JSON Web Tokens) and spent quite a bit of time understanding how to properly implement them in both React and Node.js.</p>
+                
+                <h2>Key Learnings</h2>
+                <p>Through this project, I gained valuable insights into full-stack development:</p>
+                
+                <ul>
+                    <li><strong>State Management:</strong> I learned how to effectively manage state in React using the Context API, which helped me avoid prop drilling.</li>
+                    <li><strong>Middleware in Express:</strong> I discovered how powerful middleware can be in Express.js for handling authentication, logging, and error handling.</li>
+                    <li><strong>Database Design:</strong> I spent time thinking about how to structure my MongoDB collections efficiently.</li>
+                    <li><strong>Error Handling:</strong> I implemented proper error handling on both the client and server, which saved me countless hours of debugging.</li>
+                </ul>
+
+                <!-- Plotly Chart -->
+ <div id="ae48853f-c167-44a2-8c09-f7fae6140d5c" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("ae48853f-c167-44a2-8c09-f7fae6140d5c")) {                    Plotly.newPlot(                        "ae48853f-c167-44a2-8c09-f7fae6140d5c",                        [{"hovertemplate":"Comparison=9 vs 6\u003cbr\u003eLayer Component=%{x}\u003cbr\u003eLogit Difference=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"9 vs 6","line":{"color":"#636efa","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"9 vs 6","orientation":"v","showlegend":true,"x":["embed","0_attn_out","0_mlp_out","1_attn_out","1_mlp_out","2_attn_out","2_mlp_out","3_attn_out","3_mlp_out","4_attn_out","4_mlp_out","5_attn_out","5_mlp_out","6_attn_out","6_mlp_out","7_attn_out","7_mlp_out","8_attn_out","8_mlp_out","9_attn_out","9_mlp_out","10_attn_out","10_mlp_out","11_attn_out","11_mlp_out","12_attn_out","12_mlp_out","13_attn_out","13_mlp_out","14_attn_out","14_mlp_out","15_attn_out","15_mlp_out","16_attn_out","16_mlp_out","17_attn_out","17_mlp_out","18_attn_out","18_mlp_out","19_attn_out","19_mlp_out","20_attn_out","20_mlp_out","21_attn_out","21_mlp_out","22_attn_out","22_mlp_out","23_attn_out","23_mlp_out","24_attn_out","24_mlp_out","25_attn_out","25_mlp_out","26_attn_out","26_mlp_out","27_attn_out","27_mlp_out","28_attn_out","28_mlp_out","29_attn_out","29_mlp_out","30_attn_out","30_mlp_out","31_attn_out","31_mlp_out","32_attn_out","32_mlp_out","33_attn_out","33_mlp_out","34_attn_out","34_mlp_out","35_attn_out","35_mlp_out"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAD8wb8AAAAAAFDLPwAAAAAA6NC\u002fAAAAAABY1T8AAAAAAPDCvwAAAAAAcMI\u002fAAAAAACs178AAAAAAPC2PwAAAAAADNe\u002fAAAAAAAU2D8AAAAAAAjlvwAAAAAADLk\u002fAAAAAAAk5b8AAAAAADDEPwAAAAAA9Ma\u002fAAAAAABEur8AAAAAAKjyPwAAAAAAvLE\u002fAAAAAACw5r8AAAAAAATevwAAAAAAVN4\u002fAAAAAACMnL8AAAAAAJT1PwAAAAAAOMW\u002fAAAAAABMnb8AAAAAAMTSvwAAAAAAsPY\u002fAAAAAAD4u78AAAAAAEDvPwAAAAAAULY\u002fAAAAAACw978AAAAAABTnvwAAAAAABOK\u002fAAAAAABc0r8AAAAAAMTdPwAAAAAAxL+\u002fAAAAAAC4wb8AAAAAAIDavwAAAAAAgLS\u002fAAAAAABA3z8AAAAAANjUvwAAAAAAINk\u002fAAAAAABorL8AAAAAALTbvwAAAAAAHPk\u002fAAAAAAAQ6r8AAAAAABzBPwAAAAAAMO0\u002fAAAAAAA4oT8AAAAAALjkvwAAAAAAOL+\u002fAAAAAAAw4j8AAAAAAPjxvwAAAAAACOM\u002fAAAAAADY6j8AAAAAAGjRPwAAAAAAfPg\u002fAAAAAADQ6b8AAAAAAFD+vwAAAAAABNY\u002fAAAAAABsFEAAAAAAAGDZPwAAAAAAHCBAAAAAAADQI0AAAAAAACQAQAAAAAAAGDBAAAAAAABsA0AAAAAAAGAuQAAAAAAApBdAAAAAAAD8EsAAAAAAADwwwAAAAAAA3BTAAAAAAADgMEA="},"yaxis":"y","type":"scatter"},{"hovertemplate":"Comparison=9 vs 4\u003cbr\u003eLayer Component=%{x}\u003cbr\u003eLogit Difference=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"9 vs 4","line":{"color":"#EF553B","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"9 vs 4","orientation":"v","showlegend":true,"x":["embed","0_attn_out","0_mlp_out","1_attn_out","1_mlp_out","2_attn_out","2_mlp_out","3_attn_out","3_mlp_out","4_attn_out","4_mlp_out","5_attn_out","5_mlp_out","6_attn_out","6_mlp_out","7_attn_out","7_mlp_out","8_attn_out","8_mlp_out","9_attn_out","9_mlp_out","10_attn_out","10_mlp_out","11_attn_out","11_mlp_out","12_attn_out","12_mlp_out","13_attn_out","13_mlp_out","14_attn_out","14_mlp_out","15_attn_out","15_mlp_out","16_attn_out","16_mlp_out","17_attn_out","17_mlp_out","18_attn_out","18_mlp_out","19_attn_out","19_mlp_out","20_attn_out","20_mlp_out","21_attn_out","21_mlp_out","22_attn_out","22_mlp_out","23_attn_out","23_mlp_out","24_attn_out","24_mlp_out","25_attn_out","25_mlp_out","26_attn_out","26_mlp_out","27_attn_out","27_mlp_out","28_attn_out","28_mlp_out","29_attn_out","29_mlp_out","30_attn_out","30_mlp_out","31_attn_out","31_mlp_out","32_attn_out","32_mlp_out","33_attn_out","33_mlp_out","34_attn_out","34_mlp_out","35_attn_out","35_mlp_out"],"xaxis":"x","y":{"dtype":"f8","bdata":"AAAAAAA42L8AAAAAAFjgPwAAAAAAAMM\u002fAAAAAACIUb8AAAAAAKiTvwAAAAAAaKW\u002fAAAAAAAg0b8AAAAAAOzQPwAAAAAAUMg\u002fAAAAAACMzD8AAAAAADjXvwAAAAAAAMi\u002fAAAAAADQ178AAAAAAFCzvwAAAAAAPNq\u002fAAAAAAAsyr8AAAAAAJz2PwAAAAAAZNM\u002fAAAAAADYxj8AAAAAANTHPwAAAAAA4Ha\u002fAAAAAAAswL8AAAAAAFTqPwAAAAAAhNW\u002fAAAAAADs7L8AAAAAANjVvwAAAAAAPAJAAAAAAADY0b8AAAAAAGjxPwAAAAAAJOa\u002fAAAAAACc4T8AAAAAAJTovwAAAAAAPPi\u002fAAAAAADI5b8AAAAAAAzyvwAAAAAAnMM\u002fAAAAAABU1L8AAAAAAOT2vwAAAAAAsABAAAAAAAB01D8AAAAAAFjqPwAAAAAABNk\u002fAAAAAAB86T8AAAAAAHiyvwAAAAAAUKG\u002fAAAAAABQ3L8AAAAAAOD0vwAAAAAAPNs\u002fAAAAAABIy78AAAAAAMz2vwAAAAAAHABAAAAAAACU4D8AAAAAAPQMwAAAAAAASNU\u002fAAAAAADg0b8AAAAAAID9PwAAAAAAcAVAAAAAAABsy78AAAAAAGQDQAAAAAAAzJQ\u002fAAAAAABUFUAAAAAAAMDQvwAAAAAArBpAAAAAAAC4KEAAAAAAADTyPwAAAAAAhBtAAAAAAAAw9b8AAAAAAHD+PwAAAAAAnBNAAAAAAAD0CcAAAAAAAFQWwAAAAAAAWBTAAAAAAAC0I0A="},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Layer Component"},"tickangle":-45},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Logit Difference"}},"legend":{"title":{"text":"Comparison"},"tracegroupgap":0},"title":{"text":"Per-Layer Logit Difference (9 vs All Other Options)"}},                        {"responsive": true}                    )                };            </script>        </div>
+                <!-- End Plotly Chart -->
+
+                <h2>Final Thoughts</h2>
+                <p>Building this project was an incredible learning experience. Not only did I improve my technical skills, but I also gained confidence in my ability to create full-stack applications from scratch.</p>
+                
+                <p>If you're considering starting a similar project, my advice would be to break it down into smaller, manageable pieces and tackle them one at a time. Don't be afraid to make mistakes – they're often the best teachers.</p>
+                
+                <p>I'm planning to open-source this project soon, so keep an eye on my GitHub if you're interested in checking out the code.</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">The Books That Changed My Perspective on Software Development</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">Lessons Learned After a Year of Remote Work</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2023 John's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+</html>

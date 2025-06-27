@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is the Model Thinking? Analyzing Reasoning Traces in GRPO-Tuned LLMs - Oscar's Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../../index.html">Home</a></li>
+                    <li><a href="../../about.html">About</a></li>
+                    <li><a href="../../blog.html">Blog</a></li>
+                    <li><a href="../../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">June 26, 2025</div>
+                <h1 class="single-post-title">Genuine Reasoning or Clever Mimicry? Evidence for Algorithmic Strategies in Language Models</h1>
+            </header>
+            
+            <div class="single-post-content">
+                <p>Reasoning models are one of the most exciting frontiers in AI today. These are language models trained to solve problems using human-like chains of thought. Examples include OpenAI's "O" series, DeepSeek's R1, and Anthropic's Claude "thinking" models. A defining feature of these models is their ability to generate detailed chain-of-thought (CoT) reasoning during inference—without being explicitly prompted to do so by the user. This emergent behavior has been shown to significantly boost performance in tasks like mathematics and code generation.</p>
+                
+                <p>But while their outputs can appear strikingly human-like, important questions remain:</p>
+                
+                <ul>
+                    <li><strong>What is the model actually doing during its reasoning step?</strong> Is the reasoning logically valid, or is it superficial?</li>
+                    <li><strong>Are the reasoning traces faithful?</strong> Do they reflect the true internal computation of the model, or are they merely plausible-sounding justifications post hoc?</li>
+                </ul>
+                
+                <p>These questions go beyond benchmark scores and touch on the honesty and interpretability of reasoning models. If reasoning traces are to serve as a window into the model's internal decision-making, we need to be confident that what we're seeing reflects what the model is actually doing.</p>
+                
+                <p>This concern was brought into sharp focus by a recent paper from Apple provocatively titled, <a href="https://machinelearning.apple.com/research/illusion-of-thinking" target="_blank">"The Illusion of Thinking: Understanding the Strengths and Limitations of Reasoning Models via the Lens of Problem Complexity."</a> The paper challenges the validity of reasoning traces, suggesting that, particularly as task complexity increases, these models may be "reasoning" more in appearance than in substance.</p>
+                
+                <p>There's also been fascinating work in mechanistic interpretability aimed at unpacking how these reasoning behaviors emerge. One paper that especially inspired this post is <a href="https://arxiv.org/abs/2504.14379" target="_blank">"The Geometry of Self-Verification in a Task-Specific Reasoning Model"</a> by researchers at Harvard. It investigates internal mechanisms that allow reasoning models to self-verify—i.e., check whether their own answers are correct.</p>
+                
+                <p>In this post, I analyze a reasoning model trained on the Countdown task and find that it learns and employs optimal strategies in its reasoning traces. We empirically validate this by dissecting the model's internal activations, focusing on the residual stream, to reveal how these strategies are embedded within the model's computation.</p>
+                
+                <p>Rather than evaluating the accuracy of a model's final answer, I focus on the process behind it. How does the model reason its way to a solution? Are its reasoning traces consistent with human problem-solving strategies? And perhaps most importantly: are they honest? Or is the model simply stringing together fluent, logical-sounding English that masks a more brittle, shortcut-based underlying process?</p>
+                
+
+                <h2>Technical Details</h2>
+
+                <h3>Training Problem: Countdown</h3>
+                
+                <p>The Countdown game itself is simple in concept but rich in structure. The model is given a target number and a set of three or four candidate numbers. Using only basic arithmetic operations (+, −, ×, ÷), the goal is to combine all the numbers to exactly reach the target. Below is an example of a problem the model was trained on along with a potential solution.</p>
+                
+                <!-- Example problems with reasoning traces -->
+                <div class="example-box" style="background-color: #e3f0ff; padding: 20px; margin: 20px 0; border-left: 4px solid #007acc;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div>
+                            <span style="font-size: 1.1em; font-weight: 500; color: #222; font-family: inherit;">Target:</span>
+                            <span style="font-size: 1em;  color: #222; font-family: inherit;">20</span>
+                            <span style="margin-left: 18px; font-size: 1.1em; font-weight: 500; color: #222; font-family: inherit;">Candidates:</span>
+                            <span style="font-family: inherit; color: #222;">[31, 91, 44, 36]</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; margin-left: 0;">
+                        <span style="font-size: 1.1em; color: #444; font-weight: 500; font-family: inherit;">Solution:</span>
+                        <span style="font-family: inherit; color: #28a745; font-weight: 500; margin-left: 8px;">36 + 31 + 44 - 91</span>
+                    </div>
+                </div>
+                <p>I chose this task for two main reasons:</p>
+                
+                <ul>
+                    <li><strong>Inspired by prior work:</strong> This setup builds on themes from The Geometry of Self-Verification paper, which studied internal mechanisms in reasoning models. Like that paper, I was interested in whether the model learns to verify or follow consistent strategies.</li>
+                    <li><strong>Numerical structure enables clear analysis:</strong> Unlike open-ended tasks involving natural language or commonsense reasoning, Countdown is highly structured and numerical. This makes it easier to evaluate whether the model is genuinely reasoning toward a solution—or simply producing plausible-sounding outputs. There's less ambiguity about what the "correct" steps are, which allows us to cleanly test whether the model is following an optimal or interpretable strategy.</li>
+                </ul>
+
+                <h3>Model & Training Setup</h3>
+
+                <p>
+                To investigate the nature of reasoning traces in language models, I post-trained the 
+                <a href="https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct" target="_blank">Qwen2.5-VL-3B-Instruct</a> model to play the popular arithmetic game 
+                <em>Countdown</em>. I post-trained the model using 
+                GRPO, the RL training paradigm popularized by DeepSeek, for only 450 steps, guided by two verifiable reward functions:
+                </p>
+
+                <ol>
+                <li>
+                    <strong>Formatting Reward</strong><br />
+                    Ensures that every model output includes a reasoning step enclosed in 
+                    <code>&lt;think&gt;...&lt;/think&gt;</code> tags and a final answer enclosed in 
+                    <code>&lt;answer&gt;...&lt;/answer&gt;</code> tags.
+                </li>
+                <li>
+                    <strong>Task Accuracy Reward</strong><br />
+                    Evaluates whether the expression within the <code>&lt;answer&gt;</code> tags, 
+                    when computed, matches the correct target number.
+                </li>
+                </ol>
+
+                <p>This way the model learns to reason through the problem-solving process and to output the correct answer.</p>
+                
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Note 📝</h4>
+                    <p>For the rest of the post, I will remove the <code>&lt;think&gt;</code> and <code>&lt;answer&gt;</code> tags from most of the model output examples I show for readability.</p>
+                </div>
+
+                <h2>Analyzing the Reasoning Process</h2>
+                <p>To begin unpacking how our model "thinks," we start with the most direct signal available: its reasoning traces. In the Countdown task, these traces reflect the model's step-by-step attempts to reach the target number using the provided candidate numbers and basic arithmetic operations. Below are two examples of the model's reasoning traces after 450 steps of RL post-training.</p>
+                
+                <!-- Examples showing model's reasoning traces -->
+                <div class="example-box" style="background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-left: 4px solid #007acc;">
+                    <h4>Example 1: Target 20, Candidates [31, 91, 44, 36]</h4>
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Model's reasoning trace:</strong></p>
+                        <p>We need to use the numbers 31, 91, 44, and 36 with basic arithmetic operations to get 20. Let's try different combinations:</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>91 - 31 - 44 + 36 = 52 (too high)</li>
+                            <li>91 - 31 + 44 - 36 = 68 (too high)</li>
+                            <li>91 - 44 + 31 - 36 = 42 (too high)</li>
+                            <li>91 + 31 - 44 - 36 = 42 (too high)</li>
+                            <li>44 + 36 - 91 + 31 = 18 (too low)</li>
+                            <li>44 + 31 - 91 + 36 = 18 (too low)</li>
+                            <li>36 + 31 - 91 + 44 = 18 (too low)</li>
+                            <li>36 + 91 - 44 - 31 = 52 (too high)</li>
+                            <li>36 + 91 - 44 + 31 = 142 (too high)</li>
+                            <li>36 + 31 + 44 - 91 = 20 (this works)</li>
+                        </ul>
+                        <p><strong>Answer:</strong> <span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">36 + 31 + 44 - 91</span></p>
+                    </div>
+                    
+                    <h4>Example 2: Target 32, Candidates [20, 60, 5]</h4>
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Model's reasoning trace:</strong></p>
+                        <p>We need to use the numbers 20, 60, and 5 with basic arithmetic operations to get 32. Let's try different combinations:</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>60 - 20 - 5 = 35 (not 32)</li>
+                            <li>60 - 20 + 5 = 45 (not 32)</li>
+                            <li>60 + 20 - 5 = 75 (not 32)</li>
+                            <li>60 + 20 + 5 = 85 (not 32)</li>
+                            <li>20 × 60 ÷ 5 = 240 ÷ 5 = 48 (not 32)</li>
+                            <li>20 × 5 - 60 = 100 - 60 = 40 (not 32)</li>
+                            <li>60 ÷ 5 + 20 = 12 + 20 = 32 (this works!)</li>
+                        </ul>
+                        <p><strong>Answer:</strong> <span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">60 ÷ 5 + 20</span></p>
+                    </div>
+                </div>
+
+                
+                <p>From the examples above, we observe that the model explores different combinations of the available numbers and operations, adjusting its steps until it arrives at a solution it believes matches the target.</p>
+                
+                <p>At first glance, this looks like genuine reasoning. The output is structured, coherent, and often mirrors the kind of step-by-step approach a human might use. To a casual observer, this is compelling evidence that the model is engaging in logical thought.</p>
+                
+                <p>However, I want to go deeper. I'm not just interested in whether the reasoning looks good—I want to understand what's actually happening under the hood. Is the model following a learned, interpretable strategy? Or is it producing fluent language that appears rational but doesn't reflect the model's internal computation? Is there any intentional structure to the reasoning, or is it just well-formed output optimized to sound plausible?</p>
+                
+                <p>These are the core questions that guide the rest of this investigation.</p>
+                
+                <h2>Beyond Surface Reasoning: Is There a Strategy?</h2>
+                <p>In the previous section, we saw that the model's reasoning traces are coherent and structured. But coherent output alone isn't enough—we want to know what kind of computation the model is performing internally. Is it actually following an algorithmic strategy? Or is it just trying out plausible arithmetic operations at random until it lands on a correct answer?</p>
+                
+                <p>To probe this, we turn our attention to how the model iterates toward its solution.</p>
+                
+                <h3>Answer Iteration</h3>
+                <p>The key question here is: Is there any algorithmic structure behind the model's reasoning steps, or is it effectively just sampling valid combinations until it gets lucky?</p>
+                
+                <p>At a glance, it's already clear that the model is doing something more sophisticated than random guessing. We can reason about this probabilistically by considering the number of valid expression combinations in the Countdown problem.</p>
+                
+                <p>For a given set of N candidate numbers, the number of unique, valid expressions that can be formed is:</p>
+                
+                <p style="text-align: center; font-family: 'Times New Roman', Times, serif; font-size: 1.15em; margin: 20px 0;">
+                    <span style="font-size: 1.2em;">
+                        <em>Total combinations</em> = 2 &times; 4<sup>N&nbsp;&minus;&nbsp;1</sup> &times; N!
+                    </span>
+                </p>
+                
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Derivation 📝</h4>
+                    <p>With <em>N</em> numbers, there are <em>N</em> ! possible orderings. For each arrangement, we need <em>N&nbsp;&minus;&nbsp;1</em> operators, and each operator can be one of four choices (+, −, ×, ÷), resulting in 4<sup>N&nbsp;&minus;&nbsp;1</sup> combinations. The factor of 2 comes from the fact that the very first number in the sequence can be either added or subtracted. </p>
+                </div>
+                
+                <p>For example:</p>
+                <ul>
+                    <li>When N=4, there are 3,072 possible expressions.</li>
+                    <li>When N=3, there are 192 possible expressions.</li>
+                </ul>
+                
+                <p>Yet, our model typically solves these problems in just 5 steps on average—far fewer than what random search would require.</p>
+                
+                <p>If that's not convincing enough, we can turn to a more visual comparison.</p>
+                
+                <!-- Placeholder for Figure 1 -->
+                <div style="margin: 20px 0; text-align: center;">
+                    <iframe src="additional_content/reasoning_progression_sample.html" 
+                            width="100%" 
+                            height="575" 
+                            frameborder="0" 
+                            style="border: 1px solid #ddd; border-radius: 5px;"></iframe>
+                    </iframe>
+                    <p style="margin-top: 10px; font-style: italic; color: #666;">
+                        <strong>Figure 1:</strong> Logit differences across each computation block within the model
+                    </p>
+                    </div>
+
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px; padding-bottom: 2px; margin-top: 20px; margin-bottom: 20px; border-left: 4px solid #888888;">
+                    <h4>Tip 💡</h4>
+                    <p>You can hover over the Plotly graphs to see precise values</p>
+                </div>
+                
+                <p>Figure 1 shows the intermediate reasoning values produced at each step for two different approaches: a random reasoning sequence and the model-generated reasoning sequence from Example 1. The orange horizontal line indicates the target number. This visualization maps the "distance" between each computational step and the final answer, allowing us to observe how the intermediate values evolve throughout the problem-solving process.</p>
+                
+                <p>The contrast is striking. In the random reasoning sequence, we observe dramatic swings in intermediate values—some reaching into the thousands (which have been clipped in the visualization for clarity). The model's approach, by contrast, remains much more constrained and exhibits a notably different pattern. Despite a notable jump in the penultimate step, the model demonstrates clear signs of iteratively converging toward the target solution, suggesting a more systematic and controlled reasoning process.</p>
+                
+                <p>These comparisons provide strong evidence that the model has learned a more sophisticated strategy than brute-force search. It's not just sampling expressions at random—it seems to be executing a more directed process.</p>
+                <p>But that still leaves us with deeper questions: What is that strategy? Can we find evidence for it inside the model itself—within its activations or internal representations? That's what we'll explore next.</p>
+
+                <h2>Signs of an Algorithm</h2>
+                <h3>The Largest Number First: A Strategic Pattern</h3>
+                <p>One of the first patterns I noticed while analyzing reasoning traces was surprisingly consistent: the model almost always begins by selecting the largest number in the candidate set. This behavior holds true across the examples we discussed earlier.</p>
+
+                <!-- placeholder here for examples of the starat of 5 different first reasonings -->
+                
+                <div class="example-box" style="background-color: #f8f9fa; padding: 20px; padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4 style="margin-bottom: 15px; color: #333;">Examples of Model's First Reasoning Steps</h4>
+                    
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Example 1:</strong>We need to use the numbers <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">85</span>, 54, 32, and 61 with basic arithmetic operations to get 46.</p>
+                        <p style="margin-left: 20px; color: #666;">First step: <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">85</span> - 54 - 32 + 61 = 89 (too high)</p>
+                    </div>
+                    
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Example 2:</strong> We need to use the numbers 9, <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">80</span>, and 5 with basic arithmetic operations to make 84.</p>
+                        <p style="margin-left: 20px; color: #666;">First step: <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">80</span> - 9 - 5 = 66 (too low)</p>
+                    </div>
+                    
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Example 3:</strong> We need to use the numbers <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">94</span>, 44, and 81 with basic arithmetic operations to get 57.</p>
+                        <p style="margin-left: 20px; color: #666;">First step: <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">94</span> - 44 - 81 = -27 (too low)</p>
+                    </div>
+                    
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Example 4:</strong> We need to use the numbers 24, 71, <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">92</span>, and 3 with basic arithmetic operations to make 91.</p>
+                        <p style="margin-left: 20px; color: #666;">First step: <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">92</span> - 71 + 24 + 3 = 44 (too low)</p>
+                    </div>
+                    
+                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Example 5:</strong> We need to use the numbers 33, <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">72</span>, and 44 with basic arithmetic operations to get 96.</p>
+                        <p style="margin-left: 20px; color: #666;">First step: <span style="background-color: #ffeb3b; padding: 2px 4px; font-weight: bold;">72</span> - 33 + 44 = 125 (too high)</p>
+                    </div>
+                    
+                    <p style="margin-top: 15px; font-style: italic; color: #666; text-align: center;">
+                        <strong>Notice:</strong> In every case, the model begins with the largest candidate number (highlighted in yellow).
+                    </p>
+                </div>
+                
+                <p>To quantify this, I analyzed 120 reasoning traces and found that over 95% of them began by choosing the largest number as the first operand. If the selection were random, this would only occur ~29% of the time (since the dataset contains examples of both 3 and 4 candidate numbers).</p>
+                
+                <p>This suggests the model is making a deliberate, learned decision to always start with the largest number. So the next natural questions are: Why would the model make such a strategic decision? What part of the model is responsible for this behavior? Can we pinpoint the internal mechanism that identifies and selects the largest number?</p>
+                
+                <h3>The Mathematical Rationale Behind the Strategy</h3>
+                <p>Before diving into the model's behavior, it's important to clarify one subtle but crucial point:</p>
+                
+                <p>In the Countdown arithmetic game, starting an expression with the largest number is functionally equivalent to using the largest number with the addition operator. Since the first number in an expression isn't paired with an operator, placing the largest number first inherently means it's being added to the rest of the expression. This makes "starting with the largest number" and "adding the largest number" interchangeable in this context.</p>
+                
+                <p>With that in mind, it might still seem unintuitive—why would always starting with the largest number be a smart strategy? When we consider the structure of the Countdown dataset, however, the rationale becomes clearer.</p>
+                
+                <p>To understand this behavior, I ran a brute-force analysis. For each problem in the dataset, I generated all valid arithmetic expressions using the provided numbers, then filtered for those that evaluated exactly to the target. Among these correct solutions, I measured how often the largest number was added—either by being used first or explicitly in an addition.</p>
+                
+                <p>The result was striking: the largest number was added in correct expressions <strong>73%</strong> of the time.</p>
+                
+                <p>This strongly suggests that the model has picked up on a statistical heuristic embedded in the training data. It has learned through GRPO training that adding the largest number gives it a high chance of success—so it adopts that strategy consistently. This isn't just memorization—it's generalization.</p>
+                
+
+                <h3>Inside the Model: Uncovering the Sorting Mechanism</h3>
+                <p>To answer this, we need to dive into the model's internal computations—specifically, into how it decides which token to predict next.</p>
+                
+                <p>Language models are trained as next-token predictors. At each step, they compute a probability distribution over all possible tokens by applying a softmax to the logits—the raw scores output by the model before normalization. The token with the highest logit is the one the model predicts.</p>
+                
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px; padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Note 📝</h4>
+                    <p>In practice, sampling methods like temperature or top-p can introduce randomness so the top logit isn't always selected, but for my analysis I focus on the deterministic case where the highest logit token is chosen.</p>
+                </div>
+                
+                <p>We can examine this process by looking at the logit distribution for the very first digit that the model outputs in its initial reasoning step. Consider this example:</p>
+                
+                <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #ddd;">
+                    <p>We need to use the numbers 31, 91, 44, and 36 with basic arithmetic operations to get 20. Let's try different combinations:</p>
+                    <p>- <span style="background-color: #ffeb3b; color: rgb(13, 13, 13); padding: 2px 4px; font-weight: bold;">9</span>1 - 31 - 44 + 36 = 52 (too high)</p>
+                </div>
+                
+                <p>The model's logit distribution for this first digit (highlighted in yellow above) is shown in Table 1 below:</p>
+                
+                <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Rank</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Token</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Logit</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Probability</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">9</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">39.31</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">100.00%</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">1</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">4</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">29.80</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0.01%</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">2</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">6</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">25.81</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">3</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">!</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">1.55</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">4</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">"</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">-1.83</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">5</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">#</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">1.68</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">0.00%</td>
+                    </tr>
+                </table>
+                
+                <p>The results are striking. The digit "9" (corresponding to the largest number, 91) is overwhelmingly more likely to be selected than any other token. In fact, it is <span style="font-family: 'Times New Roman', Times, serif; font-style: italic;">e</span><sup>(39.31 - 29.80)</sup> ≈ 13,493 times more likely to be selected than the second-highest scoring token, "4" (which corresponds to the first digit of 44, the second-largest number). However, this analysis only reveals what the model chose—not the internal computational process that led to this decision.</p>
+                
+                <h3>The Residual Stream</h3>
+                <p>To understand how a model arrives at a decision, we need to trace its internal computation. In transformer models, this often means looking at the <strong>residual stream</strong>—a running sum of outputs from each layer, including the original input embeddings. Every attention head and MLP reads from and writes to this stream, which effectively acts as the model's working memory.</p>
+                
+                <p>You've probably seen a diagram of a transformer where the residual stream loops around each block, like on the left side of <em>Figure 2</em>. That layout reflects the model's architecture: the residual stream doesn't perform computations itself but passes information between blocks. However, I'd argue that the right side of <em>Figure 2</em>—where the residual stream is at the center, and other components plug into it—better captures how information actually <em>flows</em>. It reframes the residual stream as the core structure of the model, with computation blocks interacting <em>with</em> it rather than acting <em>on their own</em>.</p>
+                <p>Because of its <strong>additive structure</strong>, the residual stream is especially useful for interpretation. It lets us isolate the impact of each layer on the model's predictions—revealing, for example, where specific behaviors (like selecting the largest number) start to take shape.</p>
+                
+                <!-- Residual Stream Transformer Diagram -->
+                <div style="margin: 20px 0; text-align: center;">
+                    <img src="additional_content/diagram.png" 
+                         alt="Transformer architecture diagram showing residual stream flow" 
+                         style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+                    <p style="margin-top: 10px; font-style: italic; color: #666;">
+                        <strong>Figure 2:</strong> Two perspectives on transformer architecture - traditional view (left) vs. residual stream-centered view (right)
+                    </p>
+                </div>
+
+                <p>To analyze this, we use a method called the <strong>logit lens</strong>. Rather than just examining the final output, we project the residual stream at each layer through the model's unembedding matrix. This shows us what the model would have predicted at that point in its computation.</p>
+                
+                <p>Using the logit lens, we can track how the <strong>logit difference</strong> between the largest number and other candidates evolves across layers—giving us a window into when and where the model begins to "decide."</p>
+                
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Note 📝</h4>
+                    <p>
+                        If this discussion on the residual stream interests you, I highly recommend checking out Anthropic's
+                        <a href="https://transformer-circuits.pub/2021/framework/index.html" target="_blank">"A Mathematical Framework for Transformer Circuits"</a> 
+                        where they talk about this and a bunch of other super cool interpretability concepts.
+                    </p>
+                </div>
+                
+                <h3>Visualizing the Internal Model Mechanisms</h3>
+                <p>Using Example 1 from earlier (target: 20, candidates = [31, 91, 44, 36]), a straightforward way to identify which layers are responsible for finding the largest number is to compare the logits for the token 9 (from 91) against those for 3 and 4 (from 31, 36, and 44), just as we did in the previous section.</p>
+                
+                <p>In Figure 3, I plot the logit difference between 9 and the others across all 37 layers of Qwen2.5-VL-3B-Instruct. Surprisingly, there's almost no distinction in logits for the first 27 layers. Then, around layer 33, we see a sharp spike in the logit difference—indicating a sudden emergence of preference for the largest number. This strongly suggests that some computation in layers 30–33, possibly within an attention or MLP block, is responsible for identifying the maximum value. This delayed emergence makes sense: number comparison is a relatively high-level task that likely requires earlier aggregation and contextualization steps.</p>
+                
+                <!-- Placeholder for logit difference visualization -->
+                <div style="margin: 20px 0; text-align: center;">
+                    <iframe src="additional_content/resid_stream_plot.html" 
+                            width="100%" 
+                            height="500" 
+                            frameborder="0" 
+                            style="border: 1px solid #ddd; border-radius: 5px;">
+                    </iframe>
+                    <p style="margin-top: 10px; font-style: italic; color: #666;">
+                        <strong>Figure 3:</strong> Logit differences across layers showing emergence of sorting behavior
+                    </p>
+                </div>
+                
+                <p>We can take this a step further. Instead of comparing entire layers, we can track the logit differences before and after each sub-layer, i.e., attention and MLP blocks. Figure 4 shows the result of this finer-grained analysis—and it's striking. The most significant jump occurs after Attention Block 32, pointing to this specific attention block as the key mechanism behind the model's "largest number" decision.</p>
+                
+                  <!-- Placeholder for logit difference visualization -->
+                  <div style="margin: 20px 0; text-align: center;">
+                    <iframe src="additional_content/per_layer_diff_plot.html" 
+                            width="100%" 
+                            height="500" 
+                            frameborder="0" 
+                            style="border: 1px solid #ddd; border-radius: 5px;">
+                    </iframe>
+                    <p style="margin-top: 10px; font-style: italic; color: #666;">
+                        <strong>Figure 4:</strong> Logit differences across each computation block within the model
+                    </p>
+                </div>
+
+                <p>But attention blocks aren't monolithic—they consist of multiple heads, each operating independently. So, we drilled down further to inspect which individual heads are contributing most to the logit difference. The result? The most influential are Head 7 in layers 32, 33, and 31 (in that order), with Head 7 in layer 32 being the most dominant—aligning perfectly with the spike we observed in Figure 4.</p>
+                
+                <p>When we inspect the attention patterns of this head, we see something remarkable: it shifts attention strongly toward the token corresponding to the largest number and channels that information toward the prediction slot. In essence, it's performing a max operation.</p>
+                
+                <!-- Placeholder for logit difference visualization -->
+                <div style="margin: 0px 0; text-align: center;">
+                <iframe src="additional_content/attention_plot_Top_3_Positive_Logit_Attribution_Heads_(9_vs_4).html" 
+                        width="100%" 
+                        height="1050" 
+                        frameborder="0" 
+                        style="border: 1px solid #ddd; border-radius: 5px;">
+                </iframe>
+                <p style="margin-top: 10px; font-style: italic; color: #666;">
+                    <strong>Figure 5:</strong> Attention patterns showing sorting behavior across multiple heads
+                </p>
+                </div>
+
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Note 📝</h4>
+                    <p>Due to the size of the attention map the axis are only showing every other word in the input token sequence. You can hover over the individual attention units to see the full details though. I have also provided the full input sequence below for reference.</p>
+                    <p>
+                        "We need to use the numbers 31, 91, 44, and 36 with basic arithmetic operations to get 20. Let's try different combinations: <br>
+                        - "
+                    </p>
+                </div>
+                
+                <p>Even more surprisingly, this head does more than just identify the largest number. It also attends—though less strongly—to the second- and third-largest numbers in order. This behavior closely resembles numerical sorting: the head is actively prioritizing inputs by magnitude!</p>
+
+                <p>In Table 2 below, I've listed the attention scores for the first token of each candidate number (in the order they appear) alongside their actual magnitude rank. The alignment is spot on.</p>
+                
+                <table style="border-collapse: collapse; width: 100%; margin: 20px 0; font-family: 'Courier New', monospace;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Token</th>
+                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Attention Score</th>
+                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Candidate Number</th>
+                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Attention Rank</th>
+                            <th style="border: 1px solid #ddd; padding: 12px; text-align: left;">Number Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">9</td>
+                            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">0.453</td>
+                            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">91</td>
+                            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">1</td>
+                            <td style="border: 1px solid #ddd; padding: 12px; font-weight: bold;">1</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 12px;">3</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">0.053</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">31</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">4</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">4</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 12px;">4</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">0.094</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">44</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">2</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">2</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 12px;">3</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">0.068</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">36</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">3</td>
+                            <td style="border: 1px solid #ddd; padding: 12px;">3</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p>This is a remarkable finding: we've uncovered a sorting attention head. Through training alone—without any explicit supervision—the model has learned that identifying the largest number is an optimal strategy for this task, and it has encoded that strategy in a specialized, interpretable attention head.</p>
+                
+                <h2>Conclusion</h2>
+                <p>By analyzing reasoning traces, intermediate logits, and internal attention patterns, we've uncovered clear evidence that the model isn't just "sounding smart"—it has learned an interpretable, algorithmic process to solve Countdown problems. It identifies and prioritizes the largest number, because doing so maximizes its chances of success.</p>
+                                 
+                <p>Of course, this sorting mechanism is just one part of the model's overall problem-solving approach—there are undoubtedly other computational processes at work that contribute to its reasoning abilities. But this particular insight provides a concrete example of algorithmic behavior emerging from training.</p>
+                
+                <p>The implications are significant for our understanding of reasoning models. Rather than being mere pattern-matching systems that produce plausible-sounding reasoning traces, these models can learn genuine strategies that reflect optimal problem-solving approaches. Moreover, the reasoning traces we observe aren't just post-hoc justifications—they appear to be faithful representations of the model's internal computation.</p>
+                
+                <p>This work opens up exciting avenues for future research. Can we find similar algorithmic structures in other reasoning tasks? How do these strategies emerge during training? And most importantly, can we leverage these insights to build more interpretable and trustworthy AI systems?</p>
+                
+                <h2>Acknowledgments</h2>
+                <p>This research was made possible by several excellent tools and resources. I'm grateful to the <a href="https://github.com/neelnanda-io/TransformerLens" target="_blank">TransformerLens</a> library for providing such a comprehensive mechanistic interpretability toolkit, along with their detailed documentation and walkthroughs that made this analysis accessible. The attention map visualizations were created using the <a href="https://github.com/TransformerLensOrg/CircuitsViz" target="_blank">CircuitsViz</a> package, which provides beautiful and interactive visualizations for understanding transformer internals.</p>
+                
+                <p>Special thanks to Neel Nanda, whose talk at Stanford on mechanistic interpretability inspired the research direction for this project and provided many of the conceptual frameworks used in this analysis.</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">Mechanistic Interpretability: A Deep Dive into Transformer Attention</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">The Future of AI Reasoning: Beyond Chain-of-Thought</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html> 

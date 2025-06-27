@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Oscar's Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .blog-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .blog-description {
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--secondary);
+        }
+        
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .category {
+            background-color: var(--light-bg);
+            color: var(--secondary);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category:hover, .category.active {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .search-bar {
+            max-width: 500px;
+            margin: 0 auto 40px;
+            position: relative;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-size: 1rem;
+        }
+        
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Blog Header -->
+    <section class="page-header">
+        <div class="container blog-header">
+            <h1>Blog Posts</h1>
+            <p class="blog-description">Thoughts, tutorials, and insights about technology, programming, and personal development.</p>
+            
+            <div class="categories">
+                <div class="category active">All</div>
+                <div class="category">Development</div>
+                <div class="category">Technology</div>
+                <div class="category">Design</div>
+                <div class="category">Career</div>
+                <div class="category">Personal</div>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="Search articles...">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Posts List -->
+    <section class="posts">
+        <div class="container">            
+            <!-- Post 1 -->
+            <article class="post">
+                <div class="post-date">May 15, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">Building My First Project with React and Node.js</a></h3>
+                <p class="post-excerpt">Over the past month, I've been working on building a full-stack application using React for the frontend and Node.js for the backend. Here's what I learned along the way.</p>
+                <a href="posts/reasoning_traces_grpo/reasoning-traces-grpo-llms.html" class="read-more">Read More →</a>
+            </article>
+            
+            <!-- Post 2 -->
+            <article class="post">
+                <div class="post-date">April 28, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">The Books That Changed My Perspective on Software Development</a></h3>
+                <p class="post-excerpt">In this post, I share the books that have profoundly influenced my approach to software development and problem-solving in general.</p>
+                <a href="posts/post.html" class="read-more">Read More →</a>
+            </article>
+            
+            <!-- Post 3 -->
+            <article class="post">
+                <div class="post-date">April 10, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">Lessons Learned After a Year of Remote Work</a></h3>
+                <p class="post-excerpt">It's been a full year since I transitioned to working remotely full-time. Here are my key takeaways and strategies for staying productive and balanced.</p>
+                <a href="posts/post.html" class="read-more">Read More →</a>
+            </article>
+            
+            <!-- Post 4 -->
+            <article class="post">
+                <div class="post-date">March 22, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">How to Set Up a Productive Development Environment</a></h3>
+                <p class="post-excerpt">A well-configured development environment can significantly boost your productivity. In this post, I share my setup and tools that have made coding more efficient and enjoyable.</p>
+                <a href="posts/post.html" class="read-more">Read More →</a>
+            </article>
+            
+            <!-- Post 5 -->
+            <article class="post">
+                <div class="post-date">March 8, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">Five Design Principles Every Developer Should Know</a></h3>
+                <p class="post-excerpt">Understanding basic design principles can help developers create more intuitive and visually appealing applications. Here are five key principles to incorporate into your next project.</p>
+                <a href="posts/post.html" class="read-more">Read More →</a>
+            </article>
+            
+            <!-- Post 6 -->
+            <article class="post">
+                <div class="post-date">February 17, 2023</div>
+                <h3 class="post-title"><a href="posts/post.html">Getting Started with Test-Driven Development</a></h3>
+                <p class="post-excerpt">Test-driven development can lead to more robust and maintainable code. This beginner-friendly guide explains how to incorporate TDD into your workflow.</p>
+                <a href="posts/post.html" class="read-more">Read More →</a>
+            </article>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2023 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html> 

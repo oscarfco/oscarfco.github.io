@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Highlight 5 – DeepSeek-R1: Incentivizing Reasoning Capability in LLMs - Oscar's Blog</title>
+    <meta name="description" content="A highlight of research on how DeepSeek labs developed state-of-the-art reasoning models through reinforcement learning.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">February 21, 2025</div>
+                <h1 class="single-post-title">📄 Paper Highlight 5 – DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</h1>
+                <div class="post-meta">by Oscar O'Rahilly in Paper Highlights</div>
+            </header>
+            
+            <div class="single-post-content">
+                <p>The paper this week is: <strong><em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</em></strong></p>
+                
+                <h2>Background</h2>
+                <p>I realize I'm somewhat late in writing this paper review, but I suppose it's better late than never. This paper from the team at DeepSeek truly took the world by storm for a few key reasons:</p>
+                
+                <ul>
+                    <li><strong>Performance:</strong> They released a model that outperformed OpenAI's top offering at the time on most gold standard benchmarks.</li>
+                    <li><strong>Efficiency:</strong> They trained the model at a fraction of the cost that OpenAI spent on their o1 model.</li>
+                    <li><strong>Transparency:</strong> They revealed their entire approach and released the models openly—a stark contrast to OpenAI's more guarded approach.</li>
+                </ul>
+                
+                <p>In this post, I won't dive much into the broader ramifications on the AI product ecosystem or how it shook financial markets. Instead, I'll focus on explaining how DeepSeek's team achieved these results and demystify some of the internal workings.</p>
+                
+                <h2>Introducing the First Reasoning Models</h2>
+                <p>The authors present DeepSeek's initial batch of "reasoning" models: DeepSeek-R1-Zero and DeepSeek-R1. A "reasoning model" refers to an LLM that can tackle complex problems in a manner similar to human thought. Despite the impressive results, the technique itself wasn't insanely complicated. In fact, it was the simplicity that made the outcome so astonishing.</p>
+                
+                <p>As I mentioned in a previous review (paper review #4), creating a reasoning-capable model typically follows a formula:</p>
+                
+                <ol>
+                    <li>Pre-train the LLM on vast amounts of unlabeled text via self-supervised learning.</li>
+                    <li>Supervised fine-tuning (SFT) on a smaller set of challenging problems, where human professionals provide chain-of-thought explanations.</li>
+                    <li>Reinforcement Learning (RL) to align the responses so they feel more human and reliable.</li>
+                </ol>
+                
+                <p>DeepSeek's primary insight was that focusing heavily on the RL phase can effectively teach an LLM to reason. Instead of relying extensively on step-by-step human-labeled examples, the authors allowed the model to discover its own reasoning processes through RL.</p>
+                
+                <h2>Method</h2>
+                <h3>DeepSeek-R1-Zero</h3>
+                <p>This model is built on top of DeepSeek‑V3‑Base, DeepSeek's "non‑reasoning" LLM that was obtained by extensive pre‑training on large amounts of unlabeled text. To convert it into DeepSeek‑R1‑Zero, the authors rely on just two main steps:</p>
+                
+                <ol>
+                    <li><strong>Initialize from DeepSeek‑V3‑Base</strong>
+                        <ul>
+                            <li>The team starts with the pre‑trained model, which already understands broad language patterns but lacks advanced reasoning capabilities.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Reinforcement Learning (RL)</strong>
+                        <ul>
+                            <li>They then apply thousands of RL iterations (using the GRPO algorithm) without any human‑labeled chain‑of‑thought data. The model earns rewards for two main behaviors:
+                                <ul>
+                                    <li>Revealing its reasoning process before giving a final answer.</li>
+                                    <li>Providing a correct answer to the question.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <p>To facilitate explicit chain‑of‑thought, the authors employ a custom template during RL training that separates the model's internal reasoning steps from its final response.</p>
+                
+                <p>(Note: The RL algorithm, "GRPO," is the focal point of their technical contribution, but I want to keep this review more high level. I plan on doing a follow up post "From Scratch" post where I explain the math behind GRPO and use it to train a reasoning model!)</p>
+                
+                <h3>DeepSeek-R1</h3>
+                <p>DeepSeek-R1 is a more advanced iteration that adds four extra training stages on top of DeepSeek-V3-Base. Unlike R1-Zero, it employs supervised finetuning (SFT) in addition to RL. One of the main reasons for this decision was because the authors found that a purely RL-based approach led to unstable model convergence and less interpretable outputs. Here's a brief overview of the four stages and their purposes:</p>
+                
+                <ol>
+                    <li><strong>Supervised fine-tuning (SFT)</strong>
+                        <ul>
+                            <li>Called the "cold start" stage, this was used to address the human-interpretability issues that arose in R1-Zero. They provided thousands of high-quality chain-of-thought samples before RL, giving the model an idea of what human-like reasoning looks like.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Reinforcement Learning (RL)</strong>
+                        <ul>
+                            <li>Very similar to the R1-Zero RL stage, but with an added reward that incentivizes reasoning in a single language (since R1-Zero occasionally mixed multiple languages in its chain-of-thought).</li>
+                        </ul>
+                    </li>
+                    <li><strong>Supervised fine-tuning (SFT)</strong>
+                        <ul>
+                            <li>This stage enhanced the model on tasks that aren't strictly about step-by-step reasoning. The authors generated new training data by collecting the model's own best responses from Stage 2.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Reinforcement Learning (RL)</strong>
+                        <ul>
+                            <li>The final stage aims to merge all previously acquired skills—reasoning, broad task handling, user helpfulness, and reduced harmfulness—through a multi-reward RL objective.</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <h2>Key Findings</h2>
+                <h3>Reasoning is State of the Art in R1 – Beats OpenAI-o1</h3>
+                <p>DeepSeek's fame primarily stems from its outstanding results. DeepSeek-R1 beat OpenAI-o1 on several challenging benchmarks and competes well with other leading models. It especially excelled at natural language reasoning and mathematical problem solving.</p>
+                
+                <h3>Language Mixing in R1-Zero</h3>
+                <p>A curious phenomenon emerged in the RL-only DeepSeek-R1-Zero: it tended to weave in different languages while revealing its chain-of-thought. From a usability standpoint, this is undesirable—hence DeepSeek-R1's extra reward to keep it monolingual—but it's fascinating from an interpretability angle. My interpretation is that the model realized certain languages might be more succinct for specific concepts, and didn't want to be limited to a single token distribution language. It would be intriguing to see how a similar RL approach would behave if all reasoning were done in an internal "latent space," giving the model complete freedom without token range constraints.</p>
+                
+                <h3>Simple Prompts Work Better</h3>
+                <p>Surprisingly, DeepSeek-R1 often performed better when given zero examples in the prompt. This defies the usual practice of providing few-shot examples to guide the model.</p>
+                
+                <h3>Refusal to Answer Chinese SimpleQA Questions</h3>
+                <p>The authors acknowledged that while not a formal "result," their findings indicate that "DeepSeek-R1 performs worse than DeepSeek-V3 on the Chinese SimpleQA benchmark, primarily due to its tendency to refuse answering certain queries after safety RL. Without safety RL, DeepSeek-R1 could achieve an accuracy of over 70%." Safety protocols in AI models serve an important purpose—filtering out harmful content like hate speech or instructions for weapon-making. These safeguards help prevent real-world harm and ensure ethical AI deployment. However, the issue becomes more concerning when these restrictions extend beyond safety and begin shaping narratives by selectively withholding information. When models refuse to answer historically or politically significant questions such as "What happened in Tiananmen Square?", not because they are inherently dangerous but because they may challenge prevailing views, it raises ethical red flags. This problem becomes even more alarming when the power to decide what is filtered is concentrated in the hands of a select few—whether AI company executives or even politicians. The ability to control access to information at scale is not new—history has seen similar influence through newspapers, television, and other media. However, the reach and precision of AI-driven content filtering introduce a new level of subtlety and efficiency. If left unchecked, it could be used to subtly shape public discourse and political opinion without transparency or accountability. I could elaborate further, but instead, I'll let the attached image—depicting four of the biggest players in the LLM industry sitting front row at President Trump's inauguration—speak for itself.</p>
+                
+                <h2>Implications and Conclusions</h2>
+                <p>In purely technical terms, DeepSeek-R1 was a landmark achievement: it showcased the power of reinforcement learning to produce highly capable LLMs, catapulted AI to a global stage, and accelerated the already rapid pace of AI development. It also marked a victory for open-source AI, which I am a huge fan of.</p>
+                
+                <p>Although I didn't delve into it here (as it's not explicitly stated in the paper), DeepSeek also demonstrated that state-of-the-art performance can be reached with far lower compute budgets than many believed possible.</p>
+                
+                <p>In the time since its release, numerous newer models have outperformed DeepSeek on several benchmarks such as OpenAI-o3, Grok 3 Beta and most recently Claude 3.7 Sonnet. Still, it's an exhilarating—if slightly intimidating—era for AI, and DeepSeek-R1 undeniably helped set the tone for what was to follow.</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">Paper Highlight 4: Effective Fine-tuning Strategies</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="2025-02-26-sft-memorizes-rl-generalizes.html" class="post-nav-title">Paper Highlight 6 – SFT Memorizes, RL Generalizes</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+</html>

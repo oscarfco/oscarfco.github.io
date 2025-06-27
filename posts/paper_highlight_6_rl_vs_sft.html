@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Highlight 6 – SFT Memorizes, RL Generalizes - Oscar's Blog</title>
+    <meta name="description" content="A highlight of research comparing how supervised fine-tuning and reinforcement learning affect AI model generalization capabilities.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">February 26, 2025</div>
+                <h1 class="single-post-title">📄 Paper Highlight 6 – SFT Memorizes, RL Generalizes: A Comparative Study of Foundation Model Post-training</h1>
+                <div class="post-meta">by Oscar O'Rahilly in Paper Highlights</div>
+            </header>
+            
+            <div class="single-post-content">
+                <p>The paper this week is: <strong><em><a href="https://arxiv.org/pdf/2501.17161" target="_blank" rel="noopener noreferrer">SFT Memorizes, RL Generalizes: A Comparative Study of Foundation Model Post-training</a></em></strong></p>
+                
+                <h2>Background</h2>
+                <p>Following my previous highlight on DeepSeek-R1, I came across this paper that neatly ties into the ongoing discussion of using RL and SFT for building high-quality reasoning models. As I have mentioned in previous posts, both SFT and RL are common strategies for post-training large foundation models. Traditionally, SFT has been the primary standard method for post-training. More recently, however, RL has surged in popularity in post-training, particularly after DeepSeek demonstrated that one can achieve excellent reasoning capabilities using only RL with little to no SFT. This paper examines the implications of choosing SFT vs RL on a foundation model's downstream performance, focusing on how these methods affect a model's ability to generalize versus simply memorize. Understanding this distinction sheds light on the benefits and trade-offs of using both approaches.</p>
+                
+                <h2>Method</h2>
+                <p>To evaluate the generalizability of models trained with RL and SFT, the authors introduce two challenging games, each paired with a dataset containing thousands of question–answer pairs. They then perform post-training on a foundation model under two different settings: one using only text data and the other incorporating both text and images. For each setting, they apply either reinforcement learning (RL) or supervised fine-tuning (SFT).</p>
+                
+                <p>To test the model's generalization abilities, the authors modify the original rules of each game after the models have been post-trained, and measure performance on these rule-tweaked versions without any additional training. A model that generalizes well should successfully adapt to the new rules, whereas a model that primarily relies on memorization is likely to struggle.</p>
+                
+                <p>The first game, "General Points," evaluates arithmetic reasoning in a text-only format, while the second game, "V-IRL," assesses spatial reasoning by placing the model in an open-world navigation environment. The authors use a pre-trained LLaMA-3.2-Vision-11B model as their base which is capable of text-only and text+vision tasks. To ensure the model produces consistent outputs, they first apply a small amount of SFT before training two separate versions: one with additional SFT steps and another trained for an equivalent number of steps using RL.</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/sft_memorizes/diagram.png" alt="SFT and RL post-training pipeline" class="post-image">
+                    <figcaption>Figure 1: SFT and RL post-training pipeline</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <p>As I mentioned, each game has a text only variant and a text+vision variant. The reason the authors do this is to learn the effects of both post-training methods on uni vs multimodal settings. The authors post-train an RL and SFT model for the text only and also a separate RL and SFT model for text+vision.</p>
+                
+                <h3>The General Points Environment</h3>
+                <p>In General Points, the model is given four playing cards, each displaying a numeric value, along with a target number. Its task is to construct a valid mathematical equation using all four cards exactly once to match the target number.</p>
+                
+                <p>By default, the values of the cards follow standard conventions:</p>
+                <ul>
+                    <li>Number cards (2–10) retain their face value.</li>
+                    <li>The Ace (A) is assigned a value of 1.</li>
+                    <li>The face cards—Jack (J), Queen (Q), and King (K)—are each valued at 10.</li>
+                </ul>
+
+                <figure class="post-figure">
+                    <img src="../imgs/sft_memorizes/general_points.png" alt="General Points" class="post-image">
+                    <figcaption>Figure 2: General Points Game Example</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <p>The rule variation modifies the values of the face cards:</p>
+                <ul>
+                    <li>J, Q, and K now hold values of 11, 12, and 13, respectively, instead of the default value of 10.</li>
+                </ul>
+                
+                <p>The key question is whether a model trained under the original rules can adapt to this numerical shift without additional training, demonstrating true generalization.</p>
+                
+                <h3>The V-IRL Environment</h3>
+                <p>V-IRL evaluates spatial reasoning by placing the model in an open-world navigation environment similar to Google Street View. At the beginning of the game, the model is provided with a set of directions that, if followed correctly, would lead it from the start to end state. The directions at each step provide observations such that the model has the ability to reason about whether itt took the correct action at each step. For instance one part of the instructions might read</p>
+                
+                <p>"Turn left to face the blue bus stop"</p>
+                
+                <p>So, if the model turns left and doesn't see a blue bus stop, it knows it has made an error, and should backtrack.</p>
+                
+                <p>At each step the model can make a movement action, choosing from eight possible directions:</p>
+                
+                <p>{'north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'}. After moving, the model receives either textual observations (in the text-only setting) or both textual and visual observations (in the text–image setting).</p>
+                
+                <figure class="post-figure">
+                    <img src="../imgs/sft_memorizes/virl.png" alt="V-IRL" class="post-image">
+                    <figcaption>Figure 3: V-IRL Game Example</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>The rule variation alters how the model's movements are described:</p>
+                
+                <p>Instead of cardinal and intercardinal directions, the movement options change to {'left','right', 'slightly left', 'slightly right'}. This forces the model to reinterpret spatial positioning and adjust its navigation strategy, testing whether it can generalize movement concepts beyond the original direction-based system.</p>
+                
+                <h2>Key Findings</h2>
+                <h3>SFT Memorizes, RL Generalizes</h3>
+                <p>As the paper's title suggests, the RL-based models outperform SFT-based models on out-of-distribution tasks. Even when trained on slightly different rule sets, the RL models retain high performance on entirely new rule variants, indicating they've learned transferable skills rather than simply memorizing specific solutions. By contrast, SFT-based models performance plummets at the OOD tasks but outperform RL in most in distribution tasks. The most striking result is the second column of graphs, where the text-based SFT trained model is able to achieve 100% accuracy in V-IRL after 4e9 post training steps; however, when taking that very same model and changing the rules a tiny bit the accuracy drops to almost 0%. The graphs below shows the effect on performance on both tasks and their OOD variants at each checkpoint along the post-training procedure.</p>
+                
+                <figure class="post-figure">
+                    <img src="../imgs/sft_memorizes/key_findings_1.png" alt="Key Findings" class="post-image" style="max-width: 90%;">
+                    <figcaption>Figure 4: Graphs showing RL generalization vs SFT memorization across tasks</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h3>SFT is Necessary for Effective RL Training</h3>
+                <p>A small dose of SFT is required before training with RL. Without it, the RL-trained models fail to maintain consistent output formats. This aligns with findings from DeepSeek-R1, which employed a "cold-start" SFT to stabilize the subsequent RL stage.</p>
+                
+                <h3>RL Improves Visual Capabilities</h3>
+                <p>An especially interesting result is that RL consistently enhances performance for text–image models as shown on the right set of graphs above. In the authors' graphs, the RL curves (blue) match or surpass the SFT curves (red) across all relevant vision tasks, hinting that RL might be a powerful tool for fine-tuning vision–language systems.</p>
+                
+                <h2>Implications + Conclusions</h2>
+                <p>This paper empirically confirms a widely suspected hypothesis: reinforcement learning is a critical component for building foundation models that are both robust and capable of generalization. These findings align with Deepseek's research and further reinforce the idea that RL is an indispensable step in the post-training pipeline for foundation models.</p>
+                
+                <p>Beyond these examples, I believe we will see RL post-training scale up across a wide range of domains where strong out-of-distribution (OOD) performance is critical. For instance, self-driving cars must navigate unpredictable environments, adapting to novel traffic conditions, unseen road layouts, and dynamic rule changes—challenges where RL-driven generalization could prove invaluable. Similarly, in the medical industry, the risk of misclassifying an OOD example as a false positive can be life-threatening, making robust generalization essential.</p>
+                
+                <p>I'm excited to see where RL will continue to be successfully applied!</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">DeepSeek-R1: Building High-Quality Reasoning Models</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">Paper Highlight 7: Advancing Multimodal Learning</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+</html> 

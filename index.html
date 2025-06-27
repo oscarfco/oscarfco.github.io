@@ -1,169 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bounding Box Capture</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css">
-  
-  <!-- Leaflet CSS (no integrity to avoid SRI errors) -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-    crossorigin=""
-  />
-  
-  <!-- Leaflet.draw CSS (no integrity) -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
-  />
-  
-    <!-- H3 library for hexagonal grid system -->
-    <script src="https://unpkg.com/h3-js"></script>
-    <script>
-      // Test H3 functionality
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof h3 !== 'undefined') {
-          try {
-            const testLat = 37.7749;
-            const testLng = -122.4194;
-            const testRes = 9;
-            const h3Index = h3.latLngToCell(testLat, testLng, testRes);
-            console.log("H3 test successful:", h3Index);
-          } catch (e) {
-            console.error("H3 test failed:", e);
-          }
-        } else {
-          console.error("H3 library not loaded properly");
-        }
-      });
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oscar's Blog - Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <button id="captureBtn">Capture Bounding Box</button>
-  <button id="polygonBtn"><i class="fas fa-draw-polygon"></i></button>
-  <button id="deleteBtn"><i class="fas fa-trash"></i></button>
-  <button id="helpBtn" class="help-btn"><i class="fas fa-question-circle"></i></button>
-  <div class="grid-control">
-    <label for="tileType">Tile Type:</label>
-    <select id="tileType">
-      <option value="rectangle">Rectangular Grid</option>
-      <option value="h3">H3 Hexagons</option>
-    </select>
-    
-    <div id="gridSizeContainer">
-      <label for="gridSize">Grid Size (degrees):</label>
-      <div class="grid-input-container">
-        <input type="range" id="gridSize" min="0.01" max="10" step="0.01" value="1">
-        <input type="number" id="gridSizeManual" min="0.01" max="10" step="0.01" value="1">
-      </div>
-    </div>
-    
-    <div id="h3ResolutionContainer" style="display: none;">
-      <label for="h3Resolution">H3 Resolution:</label>
-      <select id="h3Resolution">
-        <option value="0">0 - ~1107.71 km</option>
-        <option value="1">1 - ~418.68 km</option>
-        <option value="2">2 - ~158.24 km</option>
-        <option value="3">3 - ~59.81 km</option>
-        <option value="4">4 - ~22.61 km</option>
-        <option value="5">5 - ~8.54 km</option>
-        <option value="6">6 - ~3.23 km</option>
-        <option value="7">7 - ~1.22 km</option>
-        <option value="8" selected>8 - ~461.35 m</option>
-        <option value="9">9 - ~174.38 m</option>
-        <option value="10">10 - ~65.91 m</option>
-      </select>
-    </div>
-    
-    <div id="gridWarning" class="grid-warning">
-      Draw a polygon to see box count
-    </div>
-  </div>
-  <div id="map"></div>
-  <div id="info"></div>
-  
-  <!-- Leaflet JS (no integrity) -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-    crossorigin=""
-  ></script>
-  
-  <!-- Leaflet.draw JS (no integrity) -->
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
-  ></script>
-  
-  <!-- Custom JS -->
-  <script src="script.js"></script>
-  
-  <div id="helpModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Quick Guide</h2>
-      <div class="instructions">
-        <div class="help-section">
-          <h3>Drawing Tools</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <h4>Draw Polygon</h4>
-              <p>Click points for vertices, double-click to finish. Enables grid creation.</p>
-            </div>
-            <div class="help-item">
-              <h4>Bounding Box</h4>
-              <p>Click and drag for a simple rectangular area.</p>
-            </div>
-          </div>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                </ul>
+            </nav>
         </div>
+    </header>
 
-        <div class="help-section">
-          <h3>Grid Types for Polygons</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <h4>Rectangular</h4>
-              <p>Adjust size with slider. Creates grid of rectangles.</p>
-            </div>
-            <div class="help-item">
-              <h4>H3 Hexagons</h4>
-              <p>Tiles the polygon with h3 hexagons. <br><br>
-                 Choose a resolution from the dropdown. <br><br>
-                 It won't display resolutions where more than 2000 hexagons would be created. <br><br>
-                Click a hexagon to copy its ID to the clipboard.</p>
-            </div>
-          </div>
+    <!-- Introduction -->
+    <section class="intro">
+        <div class="container">
+            <h1>Welcome!</h1>
+            <p>Welcome to my personal blog where I post papers highlights, deep-dives, and build popular architectures from scratch.</p>
         </div>
+    </section>
 
-        <div class="help-section">
-          <h3>Output</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <h4>Formats</h4>
-              <p>Copy bounding box or polygon data in the following formats:
-                 <strong>JSON, Python, SQL</strong></p>
-            </div>
-          </div>
+    <!-- Posts -->
+    <section class="posts">
+        <div class="container">
+            <h2>Recent Posts</h2>
+            <!-- Posts will be loaded dynamically -->
         </div>
+    </section>
 
-        <div class="help-section">
-          <h3>SQL Options</h3>
-          <div class="help-grid">
-            <div class="help-item">
-              <h4>Configuration</h4>
-              <p>Enter table name and column names, then click <i>Update SQL</i></p>
+    <!-- About -->
+    <section class="about">
+        <div class="container">
+            <div class="about-content">
+                <img src="images/profile.jpg" alt="John Doe" class="profile-pic">
+                <div class="about-text">
+                    <h2>About Me</h2>
+                    <p>Hi, I'm Oscar. I'm an Applied ML Scientist II at Samsara in New York, focusing on Multi-Modal Models and LLM Agents. I'm passionate about creating intelligent, efficient, and user-friendly applications that solve real-world problems.</p>
+                    <a href="about.html" class="read-more">More About Me →</a>
+                </div>
             </div>
-          </div>
         </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
             </div>
-          </div>
+            <div class="copyright">
+                © 2023 Oscar's Blog. All rights reserved.
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
+    </footer>
+
+    <script src="js/script.js"></script>
 </body>
-</html>
+</html> 
