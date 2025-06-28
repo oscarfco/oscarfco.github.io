@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #ecf0f1;
+            --text-color: #2c3e50;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+
+        .screen {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .active {
+            display: block;
+        }
+
+        .team-list {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(236, 240, 241, 0.5);
+            border-radius: var(--border-radius);
+        }
+
+        .team-list div {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .score-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(236, 240, 241, 0.5);
+            border-radius: var(--border-radius);
+        }
+
+        .score-container > div {
+            padding: 10px;
+            text-align: center;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            width: 250px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #startGameBtn, button[onclick="showResults"], button[onclick="nextRound"] {
+            background-color: var(--accent-color);
+            display: block;
+            margin: 30px auto;
+            width: 200px;
+        }
+
+        #startGameBtn:hover, button[onclick="showResults"]:hover, button[onclick="nextRound"]:hover {
+            background-color: #c0392b;
+        }
+
+        #rankings {
+            padding: 20px;
+        }
+
+        #rankings div {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            font-size: 18px;
+        }
+
+        #rankings div:nth-child(1) {
+            background-color: #ffd700;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        #rankings div:nth-child(2) {
+            background-color: #c0c0c0;
+            color: var(--primary-color);
+        }
+
+        #rankings div:nth-child(3) {
+            background-color: #cd7f32;
+            color: var(--primary-color);
+        }
+
+        .team-input-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            input[type="text"], input[type="number"] {
+                width: 100%;
+            }
+
+            .team-input-container {
+                flex-direction: column;
+            }
+
+            .score-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Initial Screen -->
+    <div id="initialScreen" class="screen active">
+        <h2>Team Setup</h2>
+        <div class="team-input-container">
+            <input type="text" id="teamNameInput" placeholder="Enter team name">
+            <button onclick="addTeam()">Add Team</button>
+        </div>
+        <div id="teamList" class="team-list"></div>
+        <button onclick="startGame()" id="startGameBtn">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <h2>Game</h2>
+        <div id="scoreBoard" class="score-container"></div>
+        <button onclick="updateScores()">Update Scores</button>
+        <button onclick="showResults()">End Round</button>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen">
+        <h2>Rankings</h2>
+        <div id="rankings"></div>
+        <button onclick="nextRound()">Next Round</button>
+    </div>
+
+    <script src="scoreboard.js"></script>
+</body>
+</html> 

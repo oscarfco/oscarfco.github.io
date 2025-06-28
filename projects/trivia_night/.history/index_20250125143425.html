@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scoreboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .screen {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .team-list {
+            margin: 10px 0;
+        }
+        .score-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Initial Screen -->
+    <div id="initialScreen" class="screen active">
+        <h2>Team Setup</h2>
+        <div>
+            <input type="text" id="teamNameInput" placeholder="Enter team name">
+            <button onclick="addTeam()">Add Team</button>
+        </div>
+        <div id="teamList" class="team-list"></div>
+        <button onclick="startGame()" id="startGameBtn">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <h2>Game</h2>
+        <div id="scoreBoard" class="score-container"></div>
+        <button onclick="updateScores()">Update Scores</button>
+        <button onclick="showResults()">End Round</button>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen">
+        <h2>Rankings</h2>
+        <div id="rankings"></div>
+        <button onclick="nextRound()">Next Round</button>
+    </div>
+
+    <script src="scoreboard.js"></script>
+</body>
+</html> 
