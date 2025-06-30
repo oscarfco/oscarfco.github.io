@@ -53,7 +53,7 @@
                 
                 <p>There's also been fascinating work in mechanistic interpretability aimed at unpacking how these reasoning behaviors emerge. One paper that especially inspired this post is <a href="https://arxiv.org/abs/2504.14379" target="_blank">"The Geometry of Self-Verification in a Task-Specific Reasoning Model"</a> by researchers at Harvard. It investigates internal mechanisms that allow reasoning models to self-verify—i.e., check whether their own answers are correct.</p>
                 
-                <p>In this post, I analyze a reasoning model trained on the Countdown task and find that it learns and employs optimal strategies in its reasoning traces. We empirically validate this by dissecting the model's internal activations, focusing on the residual stream, to reveal how these strategies are embedded within the model's computation.</p>
+                <p>In this post, I analyze a reasoning model trained on the Countdown task and find that it learns and employs optimal strategies in its reasoning traces. I empirically validate this by dissecting the model's internal activations, focusing on the residual stream, to reveal how these strategies are embedded within the model's computation.</p>
                 
                 <p>Rather than evaluating the accuracy of a model's final answer, I focus on the process behind it. How does the model reason its way to a solution? Are its reasoning traces consistent with human problem-solving strategies? And perhaps most importantly: are they honest? Or is the model simply stringing together fluent, logical-sounding English that masks a more brittle, shortcut-based underlying process?</p>
                 
@@ -62,7 +62,7 @@
 
                 <h3>Training Problem: Countdown</h3>
                 
-                <p>The Countdown game itself is simple in concept but rich in structure. The model is given a target number and a set of three or four candidate numbers. Using only basic arithmetic operations (+, −, ×, ÷), the goal is to combine all the numbers to exactly reach the target. Below is an example of a problem the model was trained on along with a potential solution.</p>
+                <p>The Countdown game itself is simple in concept but surprisingly difficult for non-reasoning models to solve. The model is given a target number and a set of three or four candidate numbers. Using only basic arithmetic operations (+, −, ×, ÷), the goal is to combine all the numbers to exactly reach the target. Below is an example of a problem the model was trained on along with a potential solution.</p>
                 
                 <!-- Example problems with reasoning traces -->
                 <div class="example-box" style="background-color: #e3f0ff; padding: 20px; margin: 20px 0; border-left: 4px solid #007acc;">
@@ -89,76 +89,227 @@
                 <h3>Model & Training Setup</h3>
 
                 <p>
-                To investigate the nature of reasoning traces in language models, I post-trained the 
-                <a href="https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct" target="_blank">Qwen2.5-VL-3B-Instruct</a> model to play the popular arithmetic game 
-                <em>Countdown</em>. I post-trained the model using 
-                GRPO, the RL training paradigm popularized by DeepSeek, for only 450 steps, guided by two verifiable reward functions:
+                I built the reasoning model using 
+                <a href="https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct" target="_blank">Qwen2.5-VL-3B-Instruct</a> as the foundation. 
+                The model underwent post-training using GRPO (Group Relative Policy Optimization)—the reinforcement learning approach popularized by DeepSeek. 
+                Remarkably, meaningful reasoning behaviors emerged after just 450 training steps on a
+                <a href="https://huggingface.co/datasets/Jiayi-Pan/Countdown-Tasks-3to4" target="_blank">Countdown dataset</a>.
                 </p>
+
+                <p>The training process was guided by two complementary reward functions that together shaped the model's reasoning behavior:</p>
 
                 <ol>
                 <li>
                     <strong>Formatting Reward</strong><br />
-                    Ensures that every model output includes a reasoning step enclosed in 
-                    <code>&lt;think&gt;...&lt;/think&gt;</code> tags and a final answer enclosed in 
-                    <code>&lt;answer&gt;...&lt;/answer&gt;</code> tags.
+                    Enforces structured output by requiring every response to include explicit reasoning steps within 
+                    <code>&lt;think&gt;...&lt;/think&gt;</code> tags, followed by a final solution within 
+                    <code>&lt;answer&gt;...&lt;/answer&gt;</code> tags. This ensures the model develops the habit of "thinking out loud."
                 </li>
                 <li>
                     <strong>Task Accuracy Reward</strong><br />
-                    Evaluates whether the expression within the <code>&lt;answer&gt;</code> tags, 
-                    when computed, matches the correct target number.
+                    Validates correctness by evaluating whether the mathematical expression in the <code>&lt;answer&gt;</code> tags 
+                    produces the target number when computed. This grounds the reasoning in actual problem-solving success.
                 </li>
                 </ol>
 
-                <p>This way the model learns to reason through the problem-solving process and to output the correct answer.</p>
-                
+                <p>Together, these rewards create a training environment where the model must not only arrive at correct answers but also articulate a coherent reasoning process—setting the stage for our investigation into what the model is actually doing internally.</p>
+                <p>Prior to training, the base model only managed to solve 2.5% of the problems in the test set. After training the model was able to solve 47% of the problems in the test set. While this might seem low overall solve rate, with more training I expect the accuracy to continue improving. I was limited due to my compute budget.</p>
+
+                <!-- <p>The model was trained for 450 steps, and the following are two examples of the model's reasoning traces after RL post-training.</p> -->
                 <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
                     <h4>Note 📝</h4>
                     <p>For the rest of the post, I will remove the <code>&lt;think&gt;</code> and <code>&lt;answer&gt;</code> tags from most of the model output examples I show for readability.</p>
                 </div>
 
                 <h2>Analyzing the Reasoning Process</h2>
-                <p>To begin unpacking how our model "thinks," we start with the most direct signal available: its reasoning traces. In the Countdown task, these traces reflect the model's step-by-step attempts to reach the target number using the provided candidate numbers and basic arithmetic operations. Below are two examples of the model's reasoning traces after 450 steps of RL post-training.</p>
+                <p>To begin unpacking how our model "thinks," we start with the most direct signal available: its reasoning traces. In the Countdown task, these traces reflect the model's step-by-step attempts to reach the target number using the provided candidate numbers and basic arithmetic operations. Below are two examples of the model's outputs both before and after RL post-training. </p>
                 
                 <!-- Examples showing model's reasoning traces -->
                 <div class="example-box" style="background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-left: 4px solid #007acc;">
-                    <h4>Example 1: Target 20, Candidates [31, 91, 44, 36]</h4>
-                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                        <p><strong>Model's reasoning trace:</strong></p>
-                        <p>We need to use the numbers 31, 91, 44, and 36 with basic arithmetic operations to get 20. Let's try different combinations:</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>91 - 31 - 44 + 36 = 52 (too high)</li>
-                            <li>91 - 31 + 44 - 36 = 68 (too high)</li>
-                            <li>91 - 44 + 31 - 36 = 42 (too high)</li>
-                            <li>91 + 31 - 44 - 36 = 42 (too high)</li>
-                            <li>44 + 36 - 91 + 31 = 18 (too low)</li>
-                            <li>44 + 31 - 91 + 36 = 18 (too low)</li>
-                            <li>36 + 31 - 91 + 44 = 18 (too low)</li>
-                            <li>36 + 91 - 44 - 31 = 52 (too high)</li>
-                            <li>36 + 91 - 44 + 31 = 142 (too high)</li>
-                            <li>36 + 31 + 44 - 91 = 20 (this works)</li>
-                        </ul>
-                        <p><strong>Answer:</strong> <span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">36 + 31 + 44 - 91</span></p>
-                    </div>
                     
-                    <h4>Example 2: Target 32, Candidates [20, 60, 5]</h4>
-                    <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                        <p><strong>Model's reasoning trace:</strong></p>
-                        <p>We need to use the numbers 20, 60, and 5 with basic arithmetic operations to get 32. Let's try different combinations:</p>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>60 - 20 - 5 = 35 (not 32)</li>
-                            <li>60 - 20 + 5 = 45 (not 32)</li>
-                            <li>60 + 20 - 5 = 75 (not 32)</li>
-                            <li>60 + 20 + 5 = 85 (not 32)</li>
-                            <li>20 × 60 ÷ 5 = 240 ÷ 5 = 48 (not 32)</li>
-                            <li>20 × 5 - 60 = 100 - 60 = 40 (not 32)</li>
-                            <li>60 ÷ 5 + 20 = 12 + 20 = 32 (this works!)</li>
-                        </ul>
-                        <p><strong>Answer:</strong> <span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">60 ÷ 5 + 20</span></p>
+                    <!-- Toggle Button -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="
+                            display: inline-flex; 
+                            background-color: #f0f0f0; 
+                            border-radius: 8px; 
+                            padding: 7px; 
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">
+                            <button id="reasoningModelBtn" onclick="showReasoningModel()" style="
+                                background-color: #007acc; 
+                                color: white; 
+                                border: none; 
+                                padding: 8px 20px; 
+                                border-radius: 6px; 
+                                cursor: pointer; 
+                                font-size: 14px; 
+                                font-weight: 500;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 2px 4px rgba(0,123,204,0.3);
+                                margin-right: 4px;
+                            ">
+                                Reasoning Model
+                            </button>
+                            <button id="baseModelBtn" onclick="showBaseModel()" style="
+                            background-color: #e0e0e0; 
+                            color: #666; 
+                            border: none; 
+                            padding: 8px 20px; 
+                            border-radius: 6px; 
+                            cursor: pointer; 
+                            font-size: 14px; 
+                            font-weight: 500;
+                            transition: all 0.3s ease;
+                        ">
+                            Base Model
+                        </button>
+                        </div>
+                    </div>
+
+                    <!-- After Post-Training Examples (default) -->
+                    <div id="afterTraces">
+                        <h4>Example 1: Target 20, Candidates [31, 91, 44, 36]</h4>
+                        <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                            <p><strong>Reasoning Model's Output:</strong></p>
+                            <p>&lt;think&gt;We need to use the numbers 31, 91, 44, and 36 with basic arithmetic operations to get 20. Let's try different combinations:</p>
+                            <ul style="margin: 10px 0; padding-left: 10px; list-style: none">
+                                <li style="text-indent: -1em; padding-left: 1em;">- 91 - 31 - 44 + 36 = 52 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 91 - 31 + 44 - 36 = 68 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 91 - 44 + 31 - 36 = 42 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 91 + 31 - 44 - 36 = 42 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 44 + 36 - 91 + 31 = 18 (too low)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 44 + 31 - 91 + 36 = 18 (too low)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 36 + 31 - 91 + 44 = 18 (too low)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 36 + 91 - 44 - 31 = 52 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 36 + 91 - 44 + 31 = 142 (too high)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 36 + 31 + 44 - 91 = 20 (this works)&lt;/think&gt</li>
+                            </ul>
+                            <p>&lt;answer&gt;<span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">36 + 31 + 44 - 91</span>&lt;/answer&gt;</p>
+                        </div>
+                        
+                        <h4>Example 2: Target 32, Candidates [20, 60, 5]</h4>
+                        <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                            <p><strong>Reasoning Model's Output:</strong></p>
+                            <p>&lt;think&gt;We need to use the numbers 20, 60, and 5 with basic arithmetic operations to get 32. Let's try different combinations:</p>
+                            <ul style="margin: 10px 0; padding-left: 10px; list-style: none">
+                                <li style="text-indent: -1em; padding-left: 1em;">- 60 - 20 - 5 = 35 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 60 - 20 + 5 = 45 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 60 + 20 - 5 = 75 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 60 + 20 + 5 = 85 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 20 * 60 / 5 = 240 / 5 = 48 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 20 * 5 - 60 = 100 - 60 = 40 (not 32)</li>
+                                <li style="text-indent: -1em; padding-left: 1em;">- 60 / 5 + 20 = 12 + 20 = 32 (this works!)&lt;/think&gt;</li>
+                            </ul>
+                            <p>&lt;answer&gt;<span style="background-color: #d4edda; padding: 3px 8px; border-radius: 3px;">60 / 5 + 20</span>&lt;/answer&gt;</p>
+                        </div>
+                    </div>
+
+                    <!-- Before Post-Training Examples (hidden by default) -->
+                    <div id="beforeTraces" style="display: none;">
+                        <h4>Example 1: Target 20, Candidates [31, 91, 44, 36]</h4>
+                        <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                            <p><strong>Base Model's Output</strong></p>
+                            <p>&lt;think&gt;I need to find a way to use the numbers 91, 31, 44, and 36 exactly once using basic arithmetic operations to get 20. Let's see if any obvious combinations come to mind involving subtraction or addition.&lt;/think&gt;</p>
+                        </div>
+                        
+                        <h4>Example 2: Target 32, Candidates [20, 60, 5]</h4>
+                        <div style="font-family: 'Courier New', monospace; background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                            <p><strong>Base Model's Output</strong></p>
+                            <p>&lt;think&gt;First, I'll consider the target number we want to reach, which is 32. Let's see if multiplying or dividing directly will help us get close to 32 using the numbers [60, 20, 5].</p>
+                            <p>Multiplying 20 by 5 gives 100, which is too high. Dividing 60 by any of these numbers will give us either an integer or a fraction, neither of which is likely to be close enough to 32.</p>
+                            <p>So, let's explore subtraction: Subtracting any of these numbers from another might lead us closer. Subtracting 5 from 20 gives 15, which, when multiplied by 2 seems promising as 2*15 = 30. Adding back the remaining 60 may give us the final result.&lt;/think&gt;</p>
+                        </div>
                     </div>
                 </div>
 
-                
-                <p>From the examples above, we observe that the model explores different combinations of the available numbers and operations, adjusting its steps until it arrives at a solution it believes matches the target.</p>
+                <script>
+                let showingReasoningModel = true;
+
+                function showBaseModel() {
+                    const afterTraces = document.getElementById('afterTraces');
+                    const beforeTraces = document.getElementById('beforeTraces');
+                    const baseBtn = document.getElementById('baseModelBtn');
+                    const reasoningBtn = document.getElementById('reasoningModelBtn');
+                    
+                    // Hide reasoning model traces, show base model traces
+                    afterTraces.style.display = 'none';
+                    beforeTraces.style.display = 'block';
+                    
+                    // Update button styles
+                    baseBtn.style.backgroundColor = '#007acc';
+                    baseBtn.style.color = 'white';
+                    baseBtn.style.boxShadow = '0 2px 4px rgba(0,123,204,0.3)';
+                    
+                    reasoningBtn.style.backgroundColor = '#e0e0e0';
+                    reasoningBtn.style.color = '#666';
+                    reasoningBtn.style.boxShadow = 'none';
+                    
+                    showingReasoningModel = false;
+                }
+
+                function showReasoningModel() {
+                    const afterTraces = document.getElementById('afterTraces');
+                    const beforeTraces = document.getElementById('beforeTraces');
+                    const baseBtn = document.getElementById('baseModelBtn');
+                    const reasoningBtn = document.getElementById('reasoningModelBtn');
+                    
+                    // Hide base model traces, show reasoning model traces
+                    beforeTraces.style.display = 'none';
+                    afterTraces.style.display = 'block';
+                    
+                    // Update button styles
+                    reasoningBtn.style.backgroundColor = '#007acc';
+                    reasoningBtn.style.color = 'white';
+                    reasoningBtn.style.boxShadow = '0 2px 4px rgba(0,123,204,0.3)';
+                    
+                    baseBtn.style.backgroundColor = '#e0e0e0';
+                    baseBtn.style.color = '#666';
+                    baseBtn.style.boxShadow = 'none';
+                    
+                    showingReasoningModel = true;
+                }
+
+                // Add hover effects for both buttons
+                document.addEventListener('DOMContentLoaded', function() {
+                    const baseBtn = document.getElementById('baseModelBtn');
+                    const reasoningBtn = document.getElementById('reasoningModelBtn');
+                    
+                    baseBtn.addEventListener('mouseenter', function() {
+                        if (!showingReasoningModel) {
+                            this.style.backgroundColor = '#0056a3';
+                        } else {
+                            this.style.backgroundColor = '#d0d0d0';
+                        }
+                    });
+                    
+                    baseBtn.addEventListener('mouseleave', function() {
+                        if (!showingReasoningModel) {
+                            this.style.backgroundColor = '#007acc';
+                        } else {
+                            this.style.backgroundColor = '#e0e0e0';
+                        }
+                    });
+                    
+                    reasoningBtn.addEventListener('mouseenter', function() {
+                        if (showingReasoningModel) {
+                            this.style.backgroundColor = '#0056a3';
+                        } else {
+                            this.style.backgroundColor = '#d0d0d0';
+                        }
+                    });
+                    
+                    reasoningBtn.addEventListener('mouseleave', function() {
+                        if (showingReasoningModel) {
+                            this.style.backgroundColor = '#007acc';
+                        } else {
+                            this.style.backgroundColor = '#e0e0e0';
+                        }
+                    });
+                });
+                </script>
+
+                <p>The contrast between the base model and the reasoning model is striking. The base model's outputs are incomplete and lack systematic exploration—in Example 1, it simply acknowledges the task without attempting any calculations, and in Example 2, it begins to reason but trails off without reaching a conclusion. Both examples also fail to provide a final answer. The reasoning model, by contrast, demonstrates a methodical approach: it systematically tests different combinations, evaluates each result against the target, and continues iterating until it finds a solution. This structured problem-solving behavior emerged directly from the GRPO training process.</p>
                 
                 <p>At first glance, this looks like genuine reasoning. The output is structured, coherent, and often mirrors the kind of step-by-step approach a human might use. To a casual observer, this is compelling evidence that the model is engaging in logical thought.</p>
                 
@@ -180,7 +331,7 @@
                 
                 <p style="text-align: center; font-family: 'Times New Roman', Times, serif; font-size: 1.15em; margin: 20px 0;">
                     <span style="font-size: 1.2em;">
-                        <em>Total combinations</em> = 2 &times; 4<sup>N&nbsp;&minus;&nbsp;1</sup> &times; N!
+                        Total combinations = 2 &times; 4<sup>N&nbsp;&minus;&nbsp;1</sup> &times; N!
                     </span>
                 </p>
                 
@@ -208,7 +359,7 @@
                             style="border: 1px solid #ddd; border-radius: 5px;"></iframe>
                     </iframe>
                     <p style="margin-top: 10px; font-style: italic; color: #666;">
-                        <strong>Figure 1:</strong> Logit differences across each computation block within the model
+                        <strong>Figure 1:</strong> intermediate reasoning values of random vs reasoning model
                     </p>
                     </div>
 
@@ -278,10 +429,11 @@
                 
                 <p>The result was striking: the largest number was added in correct expressions <strong>73%</strong> of the time.</p>
                 
-                <p>This strongly suggests that the model has picked up on a statistical heuristic embedded in the training data. It has learned through GRPO training that adding the largest number gives it a high chance of success—so it adopts that strategy consistently. This isn't just memorization—it's generalization.</p>
+                <p>This strongly suggests that the model is employing a simple strategy that is effective in the Countdown game. It has learned that adding the largest number gives it a higher chance of success vs other operations—so it adopts that strategy consistently.</p>
                 
 
                 <h3>Inside the Model: Uncovering the Sorting Mechanism</h3>
+                <p>We have observed what the model is doing, and we have a good idea of why it's doing it. The final question is: how is the model doing it? What internal mehcanims is responsible for this particular strategy?</p>
                 <p>To answer this, we need to dive into the model's internal computations—specifically, into how it decides which token to predict next.</p>
                 
                 <p>Language models are trained as next-token predictors. At each step, they compute a probability distribution over all possible tokens by applying a softmax to the logits—the raw scores output by the model before normalization. The token with the highest logit is the one the model predicts.</p>
@@ -350,7 +502,7 @@
                 <h3>The Residual Stream</h3>
                 <p>To understand how a model arrives at a decision, we need to trace its internal computation. In transformer models, this often means looking at the <strong>residual stream</strong>—a running sum of outputs from each layer, including the original input embeddings. Every attention head and MLP reads from and writes to this stream, which effectively acts as the model's working memory.</p>
                 
-                <p>You've probably seen a diagram of a transformer where the residual stream loops around each block, like on the left side of <em>Figure 2</em>. That layout reflects the model's architecture: the residual stream doesn't perform computations itself but passes information between blocks. However, I'd argue that the right side of <em>Figure 2</em>—where the residual stream is at the center, and other components plug into it—better captures how information actually <em>flows</em>. It reframes the residual stream as the core structure of the model, with computation blocks interacting <em>with</em> it rather than acting <em>on their own</em>.</p>
+                <p><em>Figure 2</em>, which I created, compares two ways of visualizing this architecture. On the left is the conventional depiction, where the residual stream loops around each block. This layout mirrors the actual implementation, where the stream passes information forward without performing any computation itself. On the right is an alternative layout I designed to emphasize information flow. By placing the residual stream at the center and showing each computational block as plugging into it, the diagram reframes the residual stream as the core structure—the evolving workspace to which all computations contribute.</p>
                 <p>Because of its <strong>additive structure</strong>, the residual stream is especially useful for interpretation. It lets us isolate the impact of each layer on the model's predictions—revealing, for example, where specific behaviors (like selecting the largest number) start to take shape.</p>
                 
                 <!-- Residual Stream Transformer Diagram -->
@@ -359,7 +511,7 @@
                          alt="Transformer architecture diagram showing residual stream flow" 
                          style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px;">
                     <p style="margin-top: 10px; font-style: italic; color: #666;">
-                        <strong>Figure 2:</strong> Two perspectives on transformer architecture - traditional view (left) vs. residual stream-centered view (right)
+                        <strong>Figure 2:</strong> Two perspectives on transformer architecture - traditional view (left) vs. residual stream-centered view (right). (Diagram by me)
                     </p>
                 </div>
 
@@ -379,7 +531,7 @@
                 <h3>Visualizing the Internal Model Mechanisms</h3>
                 <p>Using Example 1 from earlier (target: 20, candidates = [31, 91, 44, 36]), a straightforward way to identify which layers are responsible for finding the largest number is to compare the logits for the token 9 (from 91) against those for 3 and 4 (from 31, 36, and 44), just as we did in the previous section.</p>
                 
-                <p>In Figure 3, I plot the logit difference between 9 and the others across all 37 layers of Qwen2.5-VL-3B-Instruct. Surprisingly, there's almost no distinction in logits for the first 27 layers. Then, around layer 33, we see a sharp spike in the logit difference—indicating a sudden emergence of preference for the largest number. This strongly suggests that some computation in layers 30–33, possibly within an attention or MLP block, is responsible for identifying the maximum value. This delayed emergence makes sense: number comparison is a relatively high-level task that likely requires earlier aggregation and contextualization steps.</p>
+                <p>In <em>Figure 3</em>, I plot the logit difference between 9 and the others across all 37 layers of Qwen2.5-VL-3B-Instruct. Surprisingly, there's almost no distinction in logits for the first 27 layers. Then, around layer 33, we see a sharp spike in the logit difference—indicating a sudden emergence of preference for the largest number. This strongly suggests that some computation in layers 30–33, possibly within an attention or MLP block, is responsible for identifying the maximum value. This delayed emergence makes sense: number comparison is a relatively high-level task that likely requires earlier aggregation and contextualization steps.</p>
                 
                 <!-- Placeholder for logit difference visualization -->
                 <div style="margin: 20px 0; text-align: center;">
