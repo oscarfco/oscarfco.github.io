@@ -7,8 +7,15 @@
     "category": "Technology"
   },
   {
+    "date": "2025-07-21",
+    "title": "🤗 SmolVLM Viz: Exploring Vision-Language-Model Attention ",
+    "slug": "smolvlm_viz_exploring_attention",
+    "excerpt": "Ever wondered what a Vision-Language Model is actually looking at when it describes an image? I built an interactive tool that lets you peek inside SmolVLM's attention patterns, revealing exactly which parts of an image the model focuses on for each word it generates.",
+    "category": "Technology"
+  },
+  {
     "date": "2025-06-24",
-    "title": "Genuine Reasoning or Clever Mimicry? Evidence for Algorithmic Strategies in Language Models",
+    "title": "🧠 Genuine Reasoning or Clever Mimicry? Evidence for Algorithmic Strategies in Language Models",
     "slug": "reasoning_traces_grpo/reasoning-traces-grpo-llms",
     "excerpt": "Do LLMs really reason, or just mimic? I train a model on the Countdown game and find it learns a true algorithm: always start with the biggest number. By peeking inside, I show this isn't just mimicry—it's real algorithmic strategy.",
     "category": "Technology"

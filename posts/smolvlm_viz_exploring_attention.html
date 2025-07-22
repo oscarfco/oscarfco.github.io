@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmolVLM Viz: Exploring Vision-Language Attention - Oscar's Blog</title>
+    <meta name="description" content="An interactive tool for exploring how Vision-Language Models process and attend to images during text generation.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">July 21, 2025</div>
+                <h1 class="single-post-title">🤗 SmolVLM Viz: Exploring Vision-Language-Model Attention</h1>
+                <div class="post-meta">by Oscar O'Rahilly in Projects</div>
+            </header>
+            
+            <div class="single-post-content">
+                <p>I've been working a lot with Vision-Language Models (VLMs) lately—both in my job and personal research. One of the coolest models I've come across is <a href="https://huggingface.co/HuggingFaceTB/SmolVLM-Instruct" target="_blank" rel="noopener noreferrer">Hugging Face's SmolVLM</a>, a suite of lightweight VLMs ranging from 2.2B parameters all the way down to a remarkably efficient 256M parameter model.</p>
+                
+                <p>What makes these small models so compelling is that they're light enough to run on free GPUs in Google Colab, yet still capable of surprisingly strong performance on vision-language tasks. This weekend, I decided to pop the hood on SmolVLM-256M-Instruct and explore how it works under the surface. Specifically, I wanted to understand:</p>
+                
+                <ul>
+                    <li>How does SmolVLM fuse and process text and image inputs?</li>
+                    <li>Can we peek into what parts of the image it's focusing on during generation?</li>
+                </ul>
+                
+                <h2>Understanding Attention in SmolVLM</h2>
+                <p>To answer these questions, I built an interactive attention map visualizer, which lets you explore what the model is "looking at" as it generates text from an input image. If you want to jump straight to the demo, here's the link:</p>
+                
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="https://vlm-viz.onrender.com/" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: var(--accent); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 1.1rem;">👉 Try the Interactive Demo</a>
+                </p>
+                <p>Otherwise, read on for more context.</p>
+
+                <h2>How to Use the Demo</h2>
+                <p>In the demo, I give SmolVLM an image of the Statue of Liberty and prompt it with:</p>
+                
+                <blockquote style="border-left: 4px solid var(--accent); padding-left: 20px; margin: 20px 0; font-style: italic; color: var(--secondary);">
+                    "Can you describe the image?"
+                </blockquote>
+                
+                <p>My tool lets you click on any output token and see which regions of the image the model was attending to at that moment. This provides a fascinating window into how the model grounds language in visual input.</p>
+                
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/smolvlm_figure_large.png" alt="SmolVLM Attention Visualizer Demo" class="post-image" style="width: 100%; max-width: 950px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 1: Reference image next to attention map</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>The interactive visualizer is designed to be intuitive, but here's a quick guide to get the most out of it:</p>
+                
+                <ol>
+                    <li><strong>Click on any output token</strong> - The generated text appears at the bottom. Click on any word to see which parts of the image the model was focusing on when generating that token.</li>
+                    <li><strong>Explore different layers</strong> - Use the layer dropdown to see how attention patterns evolve from shallow to deep layers in the network.</li>
+                    <li><strong>Switch between attention heads</strong> - Each layer has multiple attention heads that often specialize in different aspects. Try different heads to see varied attention patterns.</li>
+                    <li><strong>[Optional] Adjust the attention threshold</strong> - Move the slider to adjust the attention threshold. This will filter out less important attention weights, making the visualization easier to read.</li>
+                </ol>
+                
+                <p>The demo loads with a pre-generated response, but the real magic happens when you start clicking around and exploring different combinations of layers and heads!</p>
+                
+                
+                <h2>Insights</h2>
+                <p>Through building and experimenting with this tool, I've discovered some fascinating patterns in how SmolVLM processes vision-language tasks:</p>
+                
+                <h3>Layer-wise Attention Evolution</h3>
+                <p>Early layers tend to have more diffuse attention patterns, while deeper layers show increasingly focused attention on semantically relevant regions. This mirrors what we see in pure vision models, but with the added complexity of language conditioning.</p>
+                
+                <h3>Token-Specific Focus</h3>
+                <p>Different output tokens show dramatically different attention patterns. For example, when generating descriptive words like "statue" or "green," the model focuses on different parts of the image than when generating structural words like "the" or "and".</p>
+                
+                <h3>Multi-Head Specialization</h3>
+                <p>Different attention heads within the same layer often specialize in different aspects—some focus on fine details, others on global structure, and some seem to handle the text-image alignment.</p>
+                
+                <h2>What's Next?</h2>
+                <p>Right now, the demo includes a single image and response, but I'm planning to add more examples across diverse domains and prompts. Some ideas I'm exploring:</p>
+                
+                <ul>
+                    <li>Multiple image types (documents, charts, natural scenes, etc.)</li>
+                    <li>Different prompting strategies (questions, instructions, creative tasks)</li>
+                    <li>Comparison between different VLM architectures</li>
+                    <li>User upload functionality for custom images</li>
+                </ul>
+                
+                <p>If there are specific features you'd like to see, feel free to reach out—I'm happy to expand the tool!</p>
+                
+                <h2>Code</h2>
+                <p>If you'd like to experiment with your own images in a hosted environment, I've made a notebook version of the core functionality behind the web app. You can find it here:</p>
+                
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="https://github.com/oscarfco/vlm_viz_notebook" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: var(--accent); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 1.1rem;">👉 Notebook</a>
+                </p>
+                
+                <p>This notebook gives you everything you need to load the model, generate attention maps, and visualize them—perfect for your own exploration or projects.</p>
+                
+                <p>The full source code for the web application is also available on my <a href="https://github.com/oscarfco/vlm_viz" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none;">GitHub</a>.</p>
+                
+                <h2>Technical Details</h2>
+                <p>For those interested in the implementation details, the tool extracts attention weights from SmolVLM's transformer layers and maps them back to image patch coordinates. The visualization uses a combination of:</p>
+                
+                <ul>
+                    <li><strong>Flask backend</strong> for model inference and attention extraction</li>
+                    <li><strong>NumPy & PyTorch</strong> for efficient tensor operations</li>
+                    <li><strong>Interactive JavaScript frontend</strong> for real-time token selection and visualization</li>
+                    <li><strong>Canvas-based heatmap overlays</strong> for smooth attention visualization</li>
+                </ul>
+                
+                <p>The attention weights are interpolated and smoothed to create intuitive heatmaps that highlight the regions the model is focusing on for each token generation step.</p>
+                
+                <h2>Conclusion</h2>
+                <p>Building this visualization tool has given me a much deeper appreciation for how Vision-Language Models work. The ability to see exactly where the model is "looking" as it generates text provides invaluable insights into the multimodal reasoning process.</p>
+                
+                <p>Thanks for checking it out, and I hope you enjoy playing with it as much as I enjoyed building it. Feel free to reach out if you have ideas for improvements or would like to collaborate on extending the tool!</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="paper_deep_dive_sparse_autoencoders.html" class="post-nav-title">Paper Deep Dive - Sparse Autoencoders</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">Coming Soon...</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="https://github.com/oscarfco" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+</html> 
