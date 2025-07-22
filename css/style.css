@@ -62,21 +62,144 @@ nav a:hover, nav a.active {
 
 /* Introduction */
 .intro {
-    padding: 60px 0;
+    padding: 60px 0 30px 0;
     text-align: center;
+    background: white;
+    position: relative;
 }
 
 .intro h1 {
     font-size: 2.2rem;
-    margin-bottom: 15px;
+    margin-bottom: 30px;
     font-weight: 700;
+    color: var(--primary);
+    animation: fadeInDown 1s ease-out;
 }
 
-.intro p {
-    max-width: 600px;
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 800px;
     margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+}
+
+.profile-image-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    animation: pixelReveal 1s ease-in-out 0.5s forwards;
+}
+
+/* Pixel reveal effect using CSS */
+@keyframes pixelReveal {
+    0% {
+        opacity: 0;
+        filter: blur(20px) brightness(0);
+        transform: scale(0.8);
+    }
+    20% {
+        opacity: 0.2;
+        filter: blur(15px) brightness(0.3);
+    }
+    40% {
+        opacity: 0.4;
+        filter: blur(10px) brightness(0.6);
+    }
+    60% {
+        opacity: 0.6;
+        filter: blur(5px) brightness(0.8);
+    }
+    80% {
+        opacity: 0.8;
+        filter: blur(2px) brightness(0.9);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px) brightness(1);
+        transform: scale(1);
+    }
+}
+
+.profile-content {
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
+    animation: fadeInRight 1s ease-out 0.5s both;
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.profile-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.profile-description {
     color: var(--secondary);
     font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 20px;
+    }
+    
+    .profile-content {
+        text-align: center;
+        min-width: auto;
+    }
+    
+    .intro h1 {
+        font-size: 1.8rem;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+    }
 }
 
 /* Page Header */
