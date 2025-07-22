@@ -14,6 +14,13 @@
     "category": "Technology"
   },
   {
+    "date": "2025-06-15",
+    "title": "📄 Paper Deep Dive – Sparse Autoencoders Find Highly Interpretable Features in Language Models",
+    "slug": "paper_deep_dive_sparse_autoencoders",
+    "excerpt": "A deep dive into sparse autoencoders and their application in mechanistic interpretability of language models.",
+    "category": "Technology"
+  },
+  {
     "date": "2025-06-24",
     "title": "🧠 Genuine Reasoning or Clever Mimicry? Evidence for Algorithmic Strategies in Language Models",
     "slug": "reasoning_traces_grpo/reasoning-traces-grpo-llms",

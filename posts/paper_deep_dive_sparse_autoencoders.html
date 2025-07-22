@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Deep Dive – Sparse Autoencoders Find Highly Interpretable Features in Language Models - Oscar's Blog</title>
+    <meta name="description" content="A deep dive into sparse autoencoders and their application in mechanistic interpretability of language models.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">April 18, 2025</div>
+                <h1 class="single-post-title">📄 Paper Deep Dive – Sparse Autoencoders Find Highly Interpretable Features in Language Models</h1>
+                <div class="post-meta">by Oscar O'Rahilly in Technology</div>
+            </header>
+            
+            <div class="single-post-content">
+                <p>This post is a little different from my usual ones. For starters, the paper I'm covering isn't exactly new—it came out over a year and a half ago, which is pretty old by current ML research standards. Plus, this write-up is longer and more detailed than my usual posts.</p>
+
+                <p>The reason? I've been getting more into ML interpretability lately and wanted to share what I've been learning. It's a super interesting field, and I think more people should know about it!</p>
+
+                <p>The paper I will be looking at today is <strong><em>Sparse Autoencoders Find Highly Interpretable Features in Language Models</em></strong>.</p>
+                
+                <h2>Background</h2>
+                <p>One of the great unsolved challenges in modern AI is understanding the internal decision-making processes of machine learning models. It is surprising that even though we know how to build and implement powerful models, we still lack a deep understanding of why they behave the way they do and how they arrive at their decisions.</p>
+
+                <p>The absence of explainability underlying AI decisions is a cause for concern. We have already integrated advanced AI systems into so many aspects of our lives without fully grasping their inner workings, leaving us vulnerable to unexpected mistakes or harmful outcomes. Ideally, we want to know why an AI model outputs what it does so we can determine how much we want to trust it, the same way we evaluate advice from people. Under a more dystopian lens, as AI continues to evolve, a potential long-term worry is that AI might deceive humans while pursuing its objectives. We have already seen lower level instances of this happening with current AI systems today – a phenomenon researchers have described as "reward hacking".</p>
+
+                <p>Mechanistic interpretability is a field dedicated to uncovering how specific components inside a model contribute to the broader decision-making process. This often involves analyzing what triggers each neuron to "activate." For instance, in a language model, there might be a neuron that activates in response to mentions of the color "blue," while another might fire when a sentence includes height descriptors like "tall." Understanding the responsibility of each neuron in a language model would let us determine how language models think, allowing us to potentially optimize the way we train them or determine if they were ever exhibiting undesirable behaviors like deception.</p>
+
+                <h2>Goal</h2>
+                <p>The paper I am going to be looking at today is titled "Sparse Autoencoders Find Highly Interpretable Features in Language Models" and is a fascinating introduction paper to the field of mechanistic interpretability. It highlights the sheer level of difficulty of interpreting these large AI models while also providing some really interesting insights about how we can tease open these inner workings.</p>
+
+                <p>The main contribution of this paper is a workflow for interpreting the internal mechanics of language models. The authors use a method called sparse dictionary learning, which allows them to identify core language features based on how neurons within the model behave.</p>
+
+                <p>To properly understand this paper, it requires some core concepts related to mechanistic interpretability. Because readers may not be deeply familiar with the field of mechanistic interpretability, I have included an extensive background section that covers the most important concepts.</p>
+
+                <h2>Mechanistic Interpretability Primer</h2>
+                
+                <h3>Looking Under the Hood of an ML Model</h3>
+                <p>Understanding the internal workings of machine learning models isn't a new area of research. In fact, we've been doing it—implicitly or explicitly—since the earliest recognizable ML models.</p>
+
+                <p>Take linear regression, for example—probably the first algorithm most people encounter when learning about AI. Suppose we want to model the price of a house based on the number of bedrooms, the number of bathrooms, and the total square footage. We can capture this relationship with a simple equation:</p>
+
+                <div style="text-align: center; margin: 24px 0;">
+                    <span style="font-size: 1.3em;">
+                        \( y = a_1 x_1 + a_2 x_2 + a_3 x_3 + b \)
+                    </span>
+                </div>
+
+                <p>Here, y represents the house price, while x₁, x₂, x₃ correspond to the number of bedrooms, bathrooms, and the square footage, respectively.</p>
+
+                <p>The key point is that the model's learned parameters a₁, a₂, a₃, are immediately interpretable. A feature's importance is reflected directly in the magnitude of its associated coefficient. For instance, if the learned relationship looks like:</p>
+
+                <div style="text-align: center; margin: 24px 0;">
+                    <span style="font-size: 1.3em;">
+                        \( y = 2x_1 + x_2 + 5x_3 + 20 \)
+                    </span>
+                </div>
+
+                <p>we can reasonably conclude that square footage (x₃) has the largest impact on price, while the number of bathrooms (x₂) is less influential.</p>
+
+                <p>Many traditional ML models offer this kind of transparency—they're interpretable by design, or at least relatively straightforward to analyze.</p>
+
+                <p>But for large neural networks, things aren't so simple.</p>
+
+                <h3>Why Neural Networks Are Harder to Interpret</h3>
+                <p>With deep learning, interpreting models by just inspecting weights or neurons doesn't really work. First, unlike linear models, we don't hand-engineer features for the model to focus on. Instead, we let the model learn its own internal features from raw data. As a result, we don't inherently know what part of the model corresponds to what learned concept.</p>
+
+                <p>Second, even if we could figure out which features the model has learned to attend to, we still wouldn't know which neurons are responsible for them. Neural networks don't come with a built-in index of "what does what."</p>
+
+                <p>At its core, interpreting a neural network involves analyzing the role of each neuron. A neuron is a computational unit that applies a linear transformation, bias, and non-linearity to the input. The linear transformation and bias the neuron applies to an input are values learned during training – they are the "weights" of a network. By observing a neuron's activation—its output in response to an input—we can begin to infer what that neuron might be doing. For instance, if a particular neuron consistently outputs high values when an input sentence contains an exclamation mark, we might guess that it's tracking emotional tone or punctuation emphasis.</p>
+
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_1.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 1: Exclamation Neuron</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>So a key idea in mechanistic interpretability is simple: figure out which inputs cause each neuron to activate, and what those activations might represent.</p>
+
+                <h3>Polysemanticity</h3>
+                <p>Ideally, each neuron would correspond to one, and only one, interpretable feature. That would make things simple: one neuron could be "the color neuron," another "the height neuron," and so on.</p>
+
+                <p>But that's not what actually happens.</p>
+
+                <p>In practice, neurons tend to respond to multiple unrelated concepts. A single neuron might activate strongly for both the color green and exclamation marks. This is known as polysemanticity—a core challenge in understanding neural networks. Because of polysemanticity, it's hard to attach a single, human-readable function to most neurons.</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_1.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 2: Exclamation Neuron</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>This means that even if we can identify patterns in neuron activations, we can't always definitively say what the neuron is doing—because it might be doing many things at once.</p>
+
+                <h3>Superposition</h3>
+                <p>Why does polysemanticity arise? Why don't neural networks simply dedicate a single neuron to each feature?</p>
+
+                <p>One reason is that neural networks don't have enough neurons in each layer to represent every possible feature in language. Human language is incredibly complex, encompassing a vast range of linguistic features—sentiment, syntax, semantics, punctuation, idioms, tone, and more. Even the largest models, with billions of parameters, typically have layer sizes only in the tens of thousands. Since the number of meaningful features far exceeds the number of available neurons, the network cannot assign a unique neuron to each feature.</p>
+
+                <p>This limitation invokes the pigeonhole principle: if there are more items (features) than containers (neurons), some containers must hold multiple items.</p>
+
+                <p>This leads us to the concept of superposition.</p>
+
+                <p>In mechanistic interpretability, superposition refers to the way neural networks "pack" multiple features into shared neurons by aligning them along overlapping directions in activation space. It's a strategy that allows the model to represent more features than it has neurons—efficient, but challenging to interpret.</p>
+
+                <h3>Distributed Representation</h3>
+                <p>We've discussed how neural networks often assign multiple features to a single neuron. But in reality, they go one step further: multiple neurons can also be responsible for a single feature. This is known as distributed representation.</p>
+
+                <p>Rather than dedicating a single neuron to detect a specific concept, neural networks spread the representation of that concept across many neurons. Each neuron contributes a small part to the overall encoding, and it's the combination of their activations that captures the full meaning of the feature. This approach makes representations more robust and expressive—but also harder to interpret.</p>
+
+                <p>In contrast to the idea that each neuron corresponds to a single feature, distributed representation means that individual concepts are represented by patterns of activation spread across many neurons. There usually isn't just one neuron responsible for detecting a language feature like sarcasm, plural nouns, or geographic references. Instead, these features emerge from the combined activity of many neurons working together.</p>
+
+                <p>This makes interpretation even trickier. If you were to "turn off" one neuron, the model might still represent the same concept reasonably well using the remaining neurons. That's because the information isn't stored in a single location—it's distributed across the network.</p>
+
+                <p>This is fundamentally different from simpler models like decision trees, where you might expect one branch to handle one clear rule. In neural networks, meaning is encoded across a vector space, not a discrete component. That's why researchers often analyze activation vectors as a whole, rather than focusing too heavily on individual neurons in isolation. An activation vector is simply the collection of activations from all neurons in a particular layer of a neural network. This vector is key since it is often interpreted as the model's representation of the input at that stage of the network. Analyzing these vectors gives us an insight into what the network is doing.</p>
+
+                <p>Distributed representations give neural networks a kind of robustness and generalization ability—but they also obscure what's going on under the hood. Understanding how concepts are embedded in these high-dimensional spaces is one of the core challenges of mechanistic interpretability.</p>
+
+                <h3>Mechanistic Interpretability Primer Over</h3>
+
+                <h2>Method</h2>
+                
+                <h3>Extracting Distinct Features Out of Superposition</h3>
+                <p>Ok now we have the basics covered we can move on to the paper. As we covered in the primer, interpreting language models is challenging for two major reasons:</p>
+
+                <ul>
+                    <li><strong>Distributed Representation:</strong> Individual concepts are not tied to single neurons but instead emerge as patterns across many neurons.</li>
+                    <li><strong>Superposition:</strong> Due to limited dimensionality, those patterns overlap—meaning any given neuron may participate in representing multiple, unrelated features.</li>
+                </ul>
+
+                <p>What makes this paper particularly clever is that it proposes a method for recovering mappings between neurons and interpretable features, despite these challenges. They achieve this by building an encoder—referred to as a "dictionary"—that maps dense activation vectors into sparse representations composed of highly interpretable components. This approach is based on a technique called sparse dictionary learning.</p>
+
+                <h3>Sparse Dictionary Learning</h3>
+                <p>Sparse dictionary learning is a technique for representing complex data as a combination of a few "basis" elements selected from a larger learned set—called a dictionary.</p>
+
+                <p>In the context of language models, the idea is to represent a dense activation vector (which is hard to interpret) as a sparse vector where only a few dimensions are active—and each of those active dimensions corresponds to a meaningful, human-readable feature.</p>
+
+                <p>One way to visualize this is to imagine a fully built Lego creation. Your job is to figure out which specific Lego blocks were used and how they fit together.</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_3.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 650px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 3: Sparse Dictionary Learning Lego Example</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>Similarly, sparse dictionary learning takes a complex activation vector and breaks it down into a small number of interpretable components—like figuring out the building blocks of the model's internal computation.</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_4.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 650px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 4: Sparse Dictionary Learning Activation Example</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h3>Creating a Dictionary</h3>
+                <p>To construct this dictionary, the authors train a simple autoencoder on a large batch of activation vectors from a language model. After training, they discard the decoder and retain only the encoder. This encoder becomes the dictionary: a tool that projects dense activation vectors into much larger sparse vectors, where each dimension ideally corresponds to an interpretable feature.</p>
+                <p style="text-align: center; margin: 32px 0;">
+                    <span style="font-size: 1.35em;">
+                        $$
+                        \mathcal{L}(\mathbf{x}) = 
+                        \underbrace{\|\mathbf{x} - \hat{\mathbf{x}}\|_2^2}_{\text{Reconstruction loss}} 
+                        + 
+                        \underbrace{\alpha \|\mathbf{c}\|_1}_{\text{Sparsity loss}}
+                        $$
+                    </span>
+                </p>
+                
+                <h3>Training the Dictionary Encoder</h3>
+                <p>To train the encoder, the authors feed tens of thousands of text sequences into a language model and collect the resulting internal activations. They then use those activation vectors to train an autoencoder with two main objectives:</p>
+
+                <ul>
+                    <li><strong>Reconstruction loss</strong> – This ensures the encoder captures the essential information in the dense vector, since the decoder needs to be able to reconstruct the original activations from the sparse code.</li>
+                    <li><strong>Sparsity loss</strong> – This encourages the encoder to activate as few features as possible, promoting concise, interpretable representations. This sparsity element is key and is what allows the resulting set of dictionary features to be so interpretable.</li>
+                </ul>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_5.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 500px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 5: Autoencoder for Dicionary Learning</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>The result is a trained encoder that maps a dense activation vector into a sparse vector containing only a few highly informative features.</p>
+
+                <h3>Interpreting the Dictionary Features</h3>
+                <p>At this point, you might be wondering: So what? Even if we can map activations to a sparse vector, that vector still consists of cryptic floating-point values. We don't yet know what any of these features mean.</p>
+
+                <p>The authors address this by introducing a clever interpretability pipeline:</p>
+
+                <ol>
+                    <li>They pass 50,000 text fragments from OpenWebText through the language model and record the resulting activation vectors.</li>
+                    <li>Each activation vector is transformed by the dictionary into a sparse feature vector.</li>
+                </ol>
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_6.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 750px; display: block; margin: 0 auto;">
+                    <!-- <figcaption>Figure 6: Sparse Dictionary Learning Activation Example</figcaption> -->
+                </figure>
+                <div class="figure-spacer"></div>
+                <ol start="3">
+                    <li>For each individual sparse feature, they find the 20 text fragments that produce the strongest activations for that feature.</li>
+                    <li>These 20 fragments are then given to GPT-4, which is asked to propose a natural-language description of the concept that unifies them.</li>
+                </ol>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_7.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 1000px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 7: Natural Language Feature extraction pipeline</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h3>Evaluating the Dictionary Features</h3>
+                <p>To evaluate how well these features actually correspond to coherent, human-understandable concepts, the authors take it a step further:</p>
+
+                <ol>
+                    <li>For each interpreted feature, GPT-4 is asked to generate five new text fragments that it predicts should strongly activate that feature. GPT-4 also provides an estimated activation score for each one.</li>
+                    <li>These generated fragments are passed through the original language model (Pythia-70M), and the actual activations are collected.</li>
+                    <li>The activations are then transformed using the learned dictionary to extract the real activation values for the same feature.</li>
+                    <li>Finally, the authors compare GPT-4's predicted activation scores with the actual scores and compute a correlation-based interpretability metric.</li>
+                </ol>
+
+                <p>Below is an example from the paper showing a few features along with their GPT-4-generated descriptions and corresponding interpretability scores.</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_8.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 700px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 8: Interpretability Scores</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h2>Key Findings</h2>
+                
+                <h3>Sparse Dictionary Features Are More Interpretable Than Baselines</h3>
+                <p>Crucially, the authors reveal that the features obtained via sparse dictionary learning are noticeably more interpretable than those found using PCA or ICA. Indeed, the interpretability scores are up to twice as high compared with the best alternative methods. Nonetheless, the average score for all features hovers around 0.3 (whereas the next best technique yields about 0.15). While a meaningful improvement, these learned features are still a long way from providing a comprehensive explanation of what the language model is doing internally.</p>
+
+                <h3>Interpretability Declines With Increasing Layer Depth</h3>
+                <p>In transformer-based language models, there are multiple layers (or blocks) from which one can extract activation vectors. Within a given transformer block, you could look at the residual stream, the MLP block, or the output of attention. Another question is which transformer block to focus on when extracting these activations. Recall that most generative language models stack several transformer blocks in sequence.</p>
+
+                <p>The authors note that as they pull activations from progressively deeper transformer blocks, the resulting dictionary features from the sparse autoencoders become less interpretable (as demonstrated in their provided graph).</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_9.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 500px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 9: Interpretability Scores Across Techniques</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>I find this result fascinating because it offers a glimpse of how different layers in a transformer architecture handle language. Higher interpretability scores at earlier layers suggest that these layers capture simpler or more fundamental language features that lend themselves to straightforward natural-language explanations (e.g., words beginning with "w," or instances of color descriptions).</p>
+
+                <p>On the other hand, as layer depth increases, the features become more specialized, focusing on more niche syntactic structures or subtle linguistic nuances.</p>
+
+                <p>I particularly appreciate this finding because it parallels the way convolutional neural networks in computer vision work. Early layers in a CNN detect generic image aspects like edges and corners, while deeper layers capture more specialized elements such as faces or textures.</p>
+
+                <h3>Dictionary Features Are Monosemantic</h3>
+                <p>The authors assert that the dictionary features they derive exhibit a high degree of monosemanticity. Given that their sparse encoding objective heavily penalizes dense representations, this is not entirely unexpected. Nevertheless, it is a crucial finding, as it shows the method successfully extracts features from superposition (a core motivation for the paper).</p>
+
+                <p>To demonstrate the monosemantic quality, the authors present a histogram for dictionary feature 556 (responsible for the apostrophe token). The histogram's y-axis indicates token counts, and the x-axis shows activation values. The primary takeaway is that only the apostrophe token triggers large activation values for this feature. If the feature were polysemantic, you would see multiple unrelated tokens causing high activation values.</p>
+
+                <h3>Dictionary Features Enable Automatic Circuit Detection</h3>
+                <p>Another noteworthy outcome involves examining how certain dictionary features at one layer relate to the features in another layer. For example, do the features corresponding to apostrophes at layer 1 connect with features linked to proper nouns in a subsequent layer? The authors find several features that correlate across layers and illustrate these connections using graph structures. While the results may not be Earth-shattering—most of the relationships revolve around just a few token types (e.g., opening and closing parentheses)—this approach is promising. As interpretability methods improve further, similar graphs could illuminate the decision-making process within language models in more detail.</p>
+
+                <div class="figure-spacer"></div>
+                <figure class="post-figure" style="max-width: 950px; margin: 0 auto;">
+                    <img src="../imgs/sparse_autoencoders/figure_10.png" alt="Exclamation Neuron" class="post-image" style="width: 100%; max-width: 800px; display: block; margin: 0 auto;">
+                    <figcaption>Figure 10: Feature Circuit Detection</figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h2>Conclusion</h2>
+                <p>Understanding how Language Models (and large AI models in general) is such an interesting field. This paper did a great job at taking a peek under the hood with a fairly simple and accessible method. I truly think this will become an extremely important field as we start using AI more and more in our lives and also believe this research will give us invaluable insights for designing the next frontier of AI architectures.</p>
+
+                <p>If you truly made it all the way to the end – thank you so much! This post took a lot of time and effort and I really appreciate you taking the time to read it. If this is something you would like more of please let me know in the comments.</p>
+            </div>
+            
+            <div class="post-navigation">
+                <div class="prev-post">
+                    <span class="post-nav-label">Previous Post</span>
+                    <a href="#" class="post-nav-title">Previous Post Title</a>
+                </div>
+                <div class="next-post">
+                    <span class="post-nav-label">Next Post</span>
+                    <a href="#" class="post-nav-title">Next Post Title</a>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="https://github.com/oscarfco" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. 
+                Website built completely from scratch by me (and ChatGPT 😁)
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+</body>
+</html> 
