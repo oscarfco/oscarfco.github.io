@@ -1,0 +1,1039 @@
+<!-- wp:spacer {"height":"9px"} -->
+<div style="height:9px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Introduction</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This post is the first, of hopefully many, of what I am going to call the<em> from scratch </em>series. In this series I will look at some of the most important pieces of research in AI and build them from scratch, piece by piece. I firmly believe that a vital component in achieving a true understanding of a concept in computer science comes when you get your hands dirty and build it yourself. My aim is that through showing you how these AI concepts work in code it will give you something referenceable when you read about them in the news or scientific papers.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In addition to just showing code, I also want to also provide intuitive understanding to complicated ideas. For me, it’s so much easier to visualize an intuitive analogy or diagram than to remember a bunch of formulae or strings of technical jargon.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">So let’s dive in and build what I believe to be one of the most important inventions in computer science in the last decade, the Transformer.&nbsp;</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:spacer {"height":"9px"} -->
+<div style="height:9px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Background</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The Transformer is a machine learning architecture created by Vaswani et al and first published in 2017 in the now famous paper <em><a href="https://arxiv.org/abs/1706.03762">Attention is all you Need</a></em> (I will refer to this as AIAYN in the post).<em> </em>The Transformer is a key piece of technology that has helped power the explosion in AI over the past couple of years. Since this paper is so crucial in understanding every modern LLM used today, it only makes sense that this is the first paper we explore in the from <em>scratch series</em>.&nbsp;</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note:</em> There are many amazing resources which explain how Transformers work. If you are interested in the more fleshed out technical reasons why they work I strongly suggest the illustrated <a href="https://jalammar.github.io/illustrated-transformer/">transformer</a>. If you would like an even more visual explanation, three blue one brown’s transformer series on Youtube is phenomenal. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:separator {"className":"is-style-wide"} -->
+<hr class="wp-block-separator has-alpha-channel-opacity is-style-wide" />
+<!-- /wp:separator -->
+
+<!-- wp:spacer {"height":"9px"} -->
+<div style="height:9px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">High Level Overview</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The Transformer is a type of machine learning model called a <em>seq2seq </em>model. As the name suggests, these families of models take one sequence as input and produce another sequence as output. The use case you are probably most familiar with is translation - turning a sentence from one language into another.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Seq2seq</em> models comprise of two parts: an <strong>Encoder</strong> and a <strong>Decoder</strong>. An Encoder’s job is to turn the input sequence into a highly descriptive embedding that captures the inherent meaning of the input sequence. The decoder’s job is to turn this embedding into the output sequence. A nice intuitive way of thinking about this procedure is that the Encoder is “translating” the input sequence into a machine language and the decoder is “translating” the machine language sentence into the output language.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":496,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-13-at-10.25.45e280afam.png" alt="" class="wp-image-496" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Since the Transformer is a seq2seq model it operates in the same way. The encoder portion takes an input sentence <em>“oscar likes to code” </em>and produces an embedding that captures the meaning of the input. The decoder then takes this and outputs the sentence in french <em>“oscar aime coder”</em>. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is the Transformer diagram from AIAYN. The gray rectangle on the left is the encoder and the slightly larger rectangle on the right in the decoder. Both the encoder and decoder are further made up of smaller components as shown. The red lettering was added by me as a way to illustrate how information flows through the transformer. We will discuss the meaning of these letters later on.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":395,"width":"434px","height":"auto","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-10-at-9.50.29e280afam-2.png" alt="" class="wp-image-395" style="width:434px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Let's Build!</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In this post, we are going to build each sub-component one by one and at the end put them all together, leaving us with a fully functional Transformer! The order will be as follows:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"ordered":true} -->
+<ol class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Processing Data (not in the diagram but an essential step!)</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Input embeddings</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Attention<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li>Scaled Dot Product Attention<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li>Masking</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Multi-Head Attention</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li>Masked Multi-Head Attention</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Add &amp; Norm</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Feed Forward</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Positional Encoding</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Training Loop </li>
+<!-- /wp:list-item --></ol>
+<!-- /wp:list -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">If you would like to follow along with the code, you can <a href="https://github.com/oscarfco/transformer_from_scratch">here</a>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Processing Data</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">For this tutorial, I am using an English-German translation dataset. If you would like to code along you will need to download this <a href="https://github.com/Rishav09/Neural-Machine-Translation-System/blob/master/english-german-both.pkl">here</a>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Before the Transformer can start processing inputs, we must prepare the data in a way that it can understand. In order to work with a sentence we must do the following four things:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"ordered":true} -->
+<ol class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Tokenize the Inputs</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Add special tokens </li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Pad inputs</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Convert each token to a unique integer</li>
+<!-- /wp:list-item --></ol>
+<!-- /wp:list -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Tokenizing the input is the process of taking an input string like "oscar likes to code" and breaking it into discrete chunks, for example "oscar" "likes" "to" "code". This way the transformer knows which individual pieces of input it should look at. There are a many ways to tokenize an input but for this tutorial we will be using word-level tokenization (each token is a word).</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">To every tokenized sentence we add three special tokens. The first is at the start of the sentence, <code>&lt;sos&gt;</code>, the second immediately after the last token of the <code>&lt;eos&gt;</code> and the final is used to pad the sentence, <code>&lt;pad&gt;</code>, such that every input has the exact same number of tokens.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Once we have tokenized each sentence we then map each token to a unique integer e.g. oscar -&gt; 323. likes -&gt; 110, to -&gt; 33, code -&gt; 98. This step allows the same transformer to process any type of sequence (English, German, Korean, Python, C++) since all it sees are integers.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":258,"width":"494px","height":"auto","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-24-at-10.47.40e280afam.png" alt="" class="wp-image-258" style="width:494px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now the data is ready for the Transformer!</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note: I will not include the data processing code here but please it will be on my GitHub here. </em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Input Embeddings</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This is the first block in the Transformer diagram. This process converts an input into an embedding (which is just a vector of floats). The encoder portion of the transformer takes this initial embedding and iteratively improves the quality of the embedding through each subcomponent. You'll notice we also do the same for the Output Embeddings. We will discuss the role of these a bit more in the training portion of this post but implementation wise it is exactly the same as the input embeddings.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":264,"width":"276px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-24-at-11.14.48e280afam.png?w=1006" alt="" class="wp-image-264" style="width:276px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is the implementation of the Input Embedding and Output Embedding classes.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class InputEmbedding(nn.Module):
+    def __init__(self, vocab_size, dmodel):
+        super().__init__()
+        self.embedder = nn.Embedding(vocab_size, dmodel)
+
+    def forward(self, x):
+        return self.embedder(x)
+
+
+class OutputEmbedding(nn.Module):
+    def __init__(self, vocab_size, dmodel):
+        super().__init__()
+        self.embedder = nn.Embedding(vocab_size, dmodel)
+
+    def forward(self, x):
+        return self.embedder(x)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The <code>src_vocab_size</code> and <code>tgt_vocab_size</code> (src short for source and tgt target) variables represent the number of unique tokens present in each language within the dataset. The <code>dmodel</code> parameter is the embedding size we want to create for each individual embedding. In AIAYN they experiment with a variety of values ranging from 256 go 1024.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Information Flow in the Transformer</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In the transformer diagram above, I have annotated the inputs and outputs of each subcomponent to show you how information flows through the transformer. This diagram will be useful to revisit as you read the rest of the post. My intention in doing this is to show you that with each forward pass of the transformer, the encoder is building an improved input embedding representation. This improved input embedding will then "interact" with an improved output embedding representation produced in the decoder to create a combined embedding representation, <code>E<sub>d,3</sub></code> -- and eventually <code>E</code><sub>final</sub>. Below is a short explanation of the notation I used.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><code>E<sub>e,i</sub></code> -&gt; the ith embedding matrix in the encoder (d represents the decoder)</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><code>Q<sub>e,i</sub>, K<sub>e,i</sub>, V<sub>e,i</sub></code> -&gt; the ith set of queries keys and values (d represents the decoder).</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Attention</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now, let's delve into the core component so vital that it earned a place in the title of the paper: attention. Specifically, the transformer architecture employs a sophisticated technique known as multi-head attention. If you examine the diagram, you'll see that multi-head attention consists of several instances of scaled dot-product attention. Although this may sound complex, it's essentially an extension of standard attention mechanisms. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Before we explore scaled dot-product attention and how it extends to multi-head attention in detail, however, let's take a step back to understand the concept of attention and how it is implemented.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">What is attention?</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">"Attention" is a mechanism that enables machine learning models to identify and understand the relationships between different tokens in an input sequence. To grasp what this means, let's consider the following sentence.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":270,"width":"392px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center","className":"moving-image"} -->
+<figure class="wp-block-image aligncenter size-large is-resized moving-image"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-27-at-11.45.00e280afam.png?w=1024" alt="" class="wp-image-270" style="width:392px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In this sentence, our brain naturally recognizes that certain words are related to each other. For instance, "blue" has a strong relationship with both "toy" and "Ray," while "blue" and "Oscar" are less connected. This is because, as English speakers, we understand that "blue" describes the toy named "Ray," not "Oscar." Similarly, "Oscar" and "has" are closely related, whereas "has" and "called" are not.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The role of attention is to identify which tokens share these important relationships.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is an example of the relationships attention might detect, where the thickness of the lines indicates the strength of the relationship.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":311,"width":"394px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-30-at-8.31.55e280afpm.png?w=1024" alt="" class="wp-image-311" style="width:394px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note</em>: <em>In reality there are many more relationships of various strengths but I have just included a few for illustration.</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Scaled Dot Product Attention</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The original Transformer paper calculates attention using a scaled dot product approach. There are other ways to calculate attention and all methods intend on capturing the same relationships.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The entire calculation is captured very neatly in the following formula </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":277,"width":"354px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-28-at-6.00.59e280afpm.png?w=1024" alt="" class="wp-image-277" style="width:354px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">let's break this down.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><strong>Inputs</strong>: Q, K, and V represent the Queries, Keys, and Values, which are derived from the input embeddings. Each embedding is multiplied by three weight matrices (W<sub>q</sub>, W<sub>k</sub>, W<sub>v</sub>) to produce the Queries, Keys, and Values. Once each embedding has generated its own set of Queries, Keys, and Values, we can calculate attention.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":479,"width":"521px","height":"auto","aspectRatio":"1","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-13-at-10.38.26e280afam-3.png" alt="" class="wp-image-479" style="aspect-ratio:1;width:521px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In the context of the transformer model:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Queries (Q):</strong> These can be thought of as the questions we are asking about the relevance or importance of each word in the input sequence.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Keys (K):</strong> These act like the tags or labels that describe each word in the sequence. They help us determine how relevant each word is to a given query.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Values (V):</strong> These are the actual information or content that we want to extract or pay attention to.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">📚 Analogy</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Imagine you're in a library looking for information on a specific topic.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Query (Q):</strong> This is like the topic you're interested in, for example, "history of space exploration."</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Key (K):</strong> The keys are the labels or tags on the library's bookshelves, indicating where different topics are located, such as "astronomy," "space missions," "rocket science," etc.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size"><strong>Value (V):</strong> The values are the actual books or content found on the shelves.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">When you look for information, you use your query (the topic of interest) to scan the keys (the labels on the shelves) to find the most relevant sections of the library. Once you identify the right sections, you pull out the values (the books) to read and gather the information you need.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In the transformer model, this process happens mathematically, where each word (embedding) in the sequence generates its own set of Queries, Keys, and Values. The attention mechanism then uses these to determine how much focus each word should have in relation to the others, based on the context provided by the input sequence. This allows the model to effectively capture and utilize the relationships between different words, enhancing its understanding and processing of the input data.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Math </h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now let's focus on the formula piece by piece. I also include the relevant line number of the calculation in the code snippet.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":316,"width":"43px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-30-at-8.41.09e280afpm.png?w=322" alt="" class="wp-image-316" style="width:43px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">(line 28) In this first step, the query and key matrices are multiplied together. Intuitively, I like to think of this as a grid. Similar to our library analogy, in this grid, the queries represent questions that each token’s embedding wants to find out about the other tokens. The keys, on the other hand, represent answers to these questions. For instance, the queries might want to know, “Are there any verbs that I should be aware of?” Each query vector asks each key vector, and a score is assigned based on how well the key answers the query's question. For example, the query representing "code" and the key representing "likes" have a strong connection because "likes" is an important verb relating to "code" and so a high score will be assigned to this cell. However, the query "to" and the key representing "Oscar" have a weak score because "Oscar" is not a verb. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note: the queries and keys aren’t actually the words as the diagram depicts, but rather embeddings of floats which represent some abstract concept relating to these words.</em> I am using the words in the diagram purely for visualization purposes.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":287,"width":"438px","height":"auto","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-28-at-6.18.34e280afpm.png" alt="" class="wp-image-287" style="width:438px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:image {"id":312,"width":"53px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-30-at-8.38.32e280afpm.png?w=348" alt="" class="wp-image-312" style="width:53px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">(line 28) This next step is just a scaling of the values (hence "scaled" dot product attention). The purpose of this scaling is just to prevent the scores from getting too large which can cause zeroing out of gradients during backpropagation.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":313,"width":"133px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-30-at-8.39.56e280afpm.png?w=902" alt="" class="wp-image-313" style="width:133px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">(line 30) Now we apply softmax to the rows of the query key matrix. To turn these grid of scores into a row-wise probability distribution. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":314,"width":"156px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-30-at-8.40.30e280afpm.png?w=1024" alt="" class="wp-image-314" style="width:156px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">(line 35) Finally, we multiply these results by the Values. The values represent the transformers current best representation of the embedding. Multiplying the scores by the values produces updated versions of these embeddings using this new information.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The result we are left with is a new embedding matrix of size <code>seq_len X dmodel</code> that captures the new information discovered in the attention block. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python","align":"center","className":"moving-"} -->
+<pre class="wp-block-syntaxhighlighter-code aligncenter moving-">class ScaledDotAttention(nn.Module):
+    def __init__(self, dmodel, dk):
+        super().__init__()
+        self.Wq = nn.Linear(dmodel, dk)
+        self.Wk = nn.Linear(dmodel, dk)
+        self.Wv = nn.Linear(dmodel, dk)
+
+        self.dk = dk
+
+    def apply_masks(self, query_key_matrix, padding_mask, causal_mask):
+        masked_query_key_matrix = torch.where(padding_mask == 1, 
+                                              torch.full_like(query_key_matrix, -1e9), 
+                                              query_key_matrix)
+
+        if causal_mask is not None:
+            masked_query_key_matrix = torch.where(causal_mask == 1, 
+                                                  torch.full_like(masked_query_key_matrix, -1e9), 
+                                                  masked_query_key_matrix)
+
+        return masked_query_key_matrix
+
+    def forward(self, Qx, Kx, Vx, padding_mask, causal_mask=None):
+        Q = self.Wq(Qx)
+        K = self.Wk(Kx)
+        V = self.Wv(Vx)
+        
+        query_key_matrix = torch.matmul(Q, torch.transpose(K, 1, 2)) / np.sqrt(self.dk)
+        masked_query_key_matrix = self.apply_masks(query_key_matrix, padding_mask, causal_mask)
+        key_query_softmax = F.softmax(masked_query_key_matrix, dim=-1)
+
+        return torch.matmul(key_query_softmax, V)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The shape of the three W<sub>q</sub>, W<sub>k</sub>, W<sub>v</sub> matrices are <code>d<sub>model</sub> x d<sub>k</sub></code>. We know that <code>d<sub>model</sub></code> is the dimension of the embeddings. <code>d<sub>k</sub></code> is a parameter specific to these three matrices. In AIAYN they experiment with a variety of sizes from 16 to 512. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Masks</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In the Scaled Dot Product Attention code, there's a function called <code>apply_masks</code>. This function applies a <code>padding_mask</code> to each query-key matrix (QKT) and, in some cases, a <code>causal_mask</code>. Masks prevent attention from identifying relationships between specific tokens. To implement masking, we create a "mask matrix" of the same size as the matrix to be masked. A 1 at index (i, j) in the mask matrix indicates that the corresponding index in the original matrix should be masked, while a 0 means the original value should be retained.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">Padding Mask</h5>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The padding_mask is used to remove the &lt;pad&gt; tokens from the attention calculation since these aren't actually part of the input but are just used to make all the inputs the same length. The padding mask is created in the training loop each time we draw a new batch of input data. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":299,"width":"435px","height":"auto","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-29-at-9.51.21e280afam.png" alt="" class="wp-image-299" style="width:435px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">def create_padding_mask(x, max_tok_len):
+    batch_size = x.shape[0]
+    
+    mask = (x == 0)
+    expanded_mask = mask.unsqueeze(1).expand(batch_size, max_tok_len, max_tok_len)
+    full_mask = expanded_mask | torch.transpose(expanded_mask, 1, 2)
+
+    return full_mask.float()  </pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">Causal Mask</h5>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This is applied in the Masked-Multi Head attention component within the Decoder. The purpose of this mask is to prevent queries from "attending" (essentially interact) to keys that are later than it in the input sentence. The reason for this will become more apparent when we discuss the training loop later on. For now tough For example the query representing <em>"oscar"</em> shouldn't be able to attend to the key representing <em>"likes"</em>, <em>"to"</em> or <em>"code" </em>since they come after <em>"oscar"</em> in the original input. We do this to simulate the task the Transformer does at inference time. For instance, during inference the transformer will take an input sequence <em>"oscar likes to code"</em> and want to output the french equivalent <em>"oscar aime coder"</em>. It outputs the French, one token at a time. During training however, we pass in the completed French sentence along with the English sentence. To make sure the Transformer doesn't "cheat" we add causal masking to try and simulate the fact that during inference, at each time step it will only have access to the tokens it has predicted at earlier time steps.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":301,"width":"474px","height":"auto","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-29-at-10.05.23e280afam.png" alt="" class="wp-image-301" style="width:474px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note: You might notice we pad with the value with -1e9. The reason for this is that when we compute the softmax on the Query Key matrix, this large negative number evaluates to 0. </em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">def create_causal_mask(batch_size, max_tok_len):
+    matrix = torch.ones((max_tok_len, max_tok_len))
+    matrix = torch.triu(matrix) - torch.eye(max_tok_len)
+    return matrix.unsqueeze(0).repeat(batch_size, 1, 1)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Multi-Head Attention</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now that we understand Scaled Dot-Product Attention, we can move on to Multi-Head Attention. The main difference is that instead of computing Scaled Dot-Product Attention once, we compute it multiple times in parallel. Each instance of Scaled Dot-Product Attention is called an attention "head," and typically, we compute 6-8 heads at once.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">To compute Multi-Head Attention with N heads, we take the current set of token embeddings and multiply it by <em>N</em> independent sets of W<sub>Q</sub>, W<sub>K</sub> and W<sub>V</sub> matrices. This means each embedding generates <em>N</em> different sets of Queries, Keys, and Values. We then calculate Scaled Dot-Product Attention for each set of Queries, Keys, and Values, resulting in <em>N</em> separate attention matrices.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The final step is to transform these <em>N</em> attention matrices back into the same shape as the original embedding matrix. To do this, we concatenate all the attention matrices together and then multiply them by a final matrix W<sub>O</sub>. This matrix projects the concatenated attention matrices back into the standard size, ensuring that the final output has the same dimensions as the original input embeddings. This process allows the model to attend to information from different representation subspaces, enhancing its ability to understand complex relationships within the input sequence.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is the code for this step. One important point to note is that in traditional implementations, all <em>N </em>attention heads are computed at once in parallel. This results in significant speed improvements, especially when the size of the transformers scale. In my implementation I have computed the <em>N</em> attention heads sequentially as for demonstration purposes I think it is easier to understand. The final results of both implementations are exactly the same though.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python","align":"center"} -->
+<pre class="wp-block-syntaxhighlighter-code aligncenter">class MultiHeadedAttention(nn.Module):
+    def __init__(self, num_heads, dmodel, dk):
+        super().__init__()
+        self.attention_heads = nn.ModuleList([ScaledDotAttention(dmodel, dk) for i in range(num_heads)])
+
+        self.num_heads = num_heads
+        self.Wo = nn.Linear(self.num_heads * dk, dmodel)
+
+    def forward(self, Qx, Kx, Vx, padding_mask, causal_mask=None):
+
+        attention_results = [self.attention_heads[i](Qx, Kx, Vx, padding_mask, causal_mask) for i in range(self.num_heads)]
+        concat_results = torch.cat(attention_results, dim=2)
+        
+        return self.Wo(concat_results)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The <code>num_heads</code> parameters controls the number of attention heads. AIAYN experiments with values from 2 to 8 but settles on 6 as the optimal number. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">🤔 Why Multiple Heads?</h5>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">When I first read this paper I asked the exact same question. The simple answer is that with multiple heads, we can learn multiple different relationships between the input tokens better than if we only had one head. This is because by having multiple heads, each head is able to focus on a specific relationship present amongst the input embeddings rather than having to look at every relationship at once. This results in <em>N</em> attention heads each with their own specialization. For instance, one attention head might solely focus on the relationship between nouns and adjectives in a sentence whereas another attention head might focus on the relationships between nouns and verbs. Below is a really cool visualization from the appendix of AIAYN of the relationships focused on between two attention heads on the same sentence -- clearly showing that they focus on different kinds of relationships between tokens.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":393,"width":"421px","height":"auto","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-10-at-10.04.07e280afam.png" alt="" class="wp-image-393" style="width:421px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This interpretation also gives the concatenation and multiplication with W<sub>O</sub> steps more meaning too. The concatenation step can be thought of as all the relationships captured by the different attention heads coming together and the multiplication step is then picking which aspects of all these relationships are the most important.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is a nice diagram from the original paper visualizing the multi-head attention method as I just described. The gray linear layers represent W<sub>V</sub> W<sub>K</sub> W<sub>Q</sub> (from left to right) and the final gray linear layer at the top represents W<sub>O</sub>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":330,"width":"219px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-31-at-2.11.14e280afpm.png?w=871" alt="" class="wp-image-330" style="width:219px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Masked Multi-Head Attention</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Masked multi-head attention is the exact same implementation as multi head attention with the addition of applying the causal mask. This will be covered more in the Training section later. In my code this is achieved simply by passing a <code>causal_mask</code> when invoking the <code>MultiHeadedAttention</code> class</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Add &amp; Norm </h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This block takes the output matrix from the previous block (feed forward or attention block), adds it to the input of the previous block, and then applies layer normalization to that sum. Below, x is output from the previous block and skipped_x is the input to the previous block. The process of adding the input from the previous layer is called applying a "skip connection". </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python","className":"test-code"} -->
+<pre class="wp-block-syntaxhighlighter-code test-code">class AddAndNorm(nn.Module):
+    def __init__(self, dmodel):
+        super().__init__()
+        self.layer_norm = nn.LayerNorm(dmodel)
+
+    def forward(self, x, skipped_x):
+        return self.layer_norm(x + skipped_x)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">🤔 Why use a skip connection</h5>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Simply put, the skip connection allows a greater amount of information to flow through the transformer since it allows the model to keep hold of important information that might have been lost or distorted through the previous sub-component. For instance, take the Multi-Head example in the right of the diagram below. As we discussed, the role of this sub-component is to find the important relationships between the current input embeddings and produce a new updated set of embeddings capturing this new-found information. In doing this, however, it might have to "overwrite" information that previous sub-components had added to the embeddings or on the other extreme it might not add the new information because it doesn't want to overwrite the existing information. The skip connection allows the multi-head attention block to not worry about this since it knows the current information will be passed along to the next block regardless of what it outputs. This allows the multi-head attention block to purely focus on its relationship discovery task.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note: There are many other benefits to the skip connection. Another notable one is that it reduces the vanishing gradient risk in the backwards pass, allowing us to build deeper, and therefore more expressive networks. </em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":352,"width":"521px","height":"auto","sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/05/screenshot-2024-05-31-at-3.42.58e280afpm.png" alt="" class="wp-image-352" style="width:521px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:heading {"level":5} -->
+<h5 class="wp-block-heading">🤔 Why Use Layer Norm?</h5>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">First of all, why would we use a normalization in the first place? The textbook answer is that it speeds up the convergence of the network. This speed up comes from the fact that after normalization each layer will have the same overall mean (0) and variance (1) so the optimization targets are all within the same scale. When I first heard this reason, it didn't make an awful lot of sense to me. To try and elucidate this argument, consider the following analogy:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Suppose you have entered an archery competition. This competition consists of two separate rounds. In the first round the target is the same shape and size for each of your shots (constant mean and variance). In the second round, the shape and size of the target shifts for each arrow (think of this as the mean and variance changing). Each round stops when you are able to make 10 shots in a row (convergence) and your score for the round is the number of shots it took you to end the round.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":356,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-03-at-11.06.03e280afam.png" alt="" class="wp-image-356" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In this scenario you will most likely reach the end of round 1 with much fewer arrows than round 2, since you don't have to re-account for the difference in target size at each shot. The same is true for a neural network. That's why layer norm is so powerful.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Feed Forward</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">This component is pretty straightforward. It is simply two linear transformations combined with a ReLU non linearity. I like to think of the purpose of this layer as a consolidation of the information contained in the embeddings so far. At each other component we are adding more information to the embeddings. The purpose of the feedforward block is to make sense of all the information through removing unnecessary information and highlighting important information. In AIAYN the optimal <code>dff</code> is 2048.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class FeedForward(nn.Module):
+    def __init__(self, dmodel, dff):
+        super().__init__()
+        self.inner_linear = nn.Linear(dmodel, dff)
+        self.outer_linear = nn.Linear(dff, dmodel)
+
+    def forward(self, x):
+        return self.outer_linear(F.relu(self.inner_linear(x)))   </pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Positional Encodings</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">While this isn't depicted as a block in the Transformer diagram, don't assume that this step isn't important. In fact, without positional encodings, the transformer really struggles to learn anything. The reason for this is that without positional encodings, the transformer doesn't know the ordering of the inputs. To address this issue, positional encodings are added to the initial input embeddings in both the encoder and decoder portions. AIAYN uses a sinusoidal positional encoding which takes the position of the embedding and the dimension of each individual embedding as input. The formula is shown below.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":372,"width":"348px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-03-at-12.16.56e280afpm-1.png?w=1002" alt="" class="wp-image-372" style="width:348px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is a diagram illustrating the calculation of the positional encodings for two values. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":375,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-04-at-12.25.26e280afpm.png" alt="" class="wp-image-375" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Below is my implementation of <code>PositionEncoding</code> class. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class PositionalEncoding(nn.Module):
+    def __init__(self, dmodel):
+        super().__init__()
+        pass
+        
+    def forward(self, x):
+        batch_size, tok_len, dmodel = x.shape # (B x num_tok x dmodel)
+        positional_encodings = torch.zeros_like(x)
+
+        for pos in range(tok_len):
+            for i in range(dmodel):
+                if i % 2 == 0:
+                    positional_encodings[:, pos, i] = np.sin(pos / (10000 ** (2*i/ dmodel)))
+                else:
+                    positional_encodings[:, pos, i] = np.cos(pos / (10000 ** (2*i/ dmodel)))
+
+        return x + positional_encodings</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">🤔 Why do Transformers need Positional Encodings?</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">We don't see positional encodings in other language models such as RNNs, so what is different about the Transformer that necessitates them? The answer...parallelization. Unlike all the previous state of the art language models that came before them such as RNNs and LSTMs, Transformers can process the entire input sequence at once due to the parallelized nature of attention. Recall attention is essentially just matrix multiplication, which on modern GPU hardware can be parallelized very efficiently. This means that the position of the input can not be preserved since we are distributing the embeddings across multiple different machines. RNNs and LSTMs, on the other hand, had to process each token sequentially which meant that position could always be inferred without any additional information.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:spacer {"height":"35px"} -->
+<div style="height:35px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:separator {"className":"is-style-wide"} -->
+<hr class="wp-block-separator has-alpha-channel-opacity is-style-wide" />
+<!-- /wp:separator -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Putting Everything Together</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now we are ready to combine all of the blocks together and build the whole transformer!</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Encoder</h4>
+<!-- /wp:heading -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class Encoder(nn.Module):
+    def __init__(self, num_heads, dmodel, dk, dff):
+        super().__init__()
+        self.multi_headed_attention = MultiHeadedAttention(num_heads, dmodel, dk)
+        self.add_norm_1 = AddAndNorm(dmodel)
+        self.add_norm_2 = AddAndNorm(dmodel)
+        self.feed_forward = FeedForward(dmodel, dff)
+
+    def forward(self, x, padding_mask):
+        x1 = self.multi_headed_attention(x, x, x, padding_mask)
+        x1 = self.add_norm_1(x1, x)
+
+        x2 = self.feed_forward(x1)
+        x2 = self.add_norm_2(x2, x1)
+
+        return x2</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Decoder</h4>
+<!-- /wp:heading -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class Decoder(nn.Module):
+    def __init__(self, num_heads, dmodel, dk, dff):
+        super().__init__()
+        self.masked_multi_headed_attention = MultiHeadedAttention(num_heads, dmodel, dk)
+        self.multi_headed_attention = MultiHeadedAttention(num_heads, dmodel, dk)
+        self.add_norm_1 = AddAndNorm(dmodel)
+        self.add_norm_2 = AddAndNorm(dmodel)
+        self.add_norm_3 = AddAndNorm(dmodel)
+        self.feed_forward = FeedForward(dmodel, dff)
+        
+
+    def forward(self, dec_input, enc_out, padding_mask, causal_mask):
+        x1 = self.masked_multi_headed_attention(dec_input, dec_input, dec_input, padding_mask, causal_mask)
+        x1 = self.add_norm_1(x1, dec_input)
+
+        x2 = self.multi_headed_attention(x1, enc_out, enc_out, padding_mask)
+        x2 = self.add_norm_2(x2, x1)
+
+        x3 = self.feed_forward(x2)
+        x3 = self.add_norm_3(x3, x2)
+
+        return x3      </pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Transformer</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now we have both the encoder and decoder, we can put them together to make up the whole transformer class. The final linear_layer you see on line 24 corresponds to the penultimate purple Linear block you see in the transformer diagram (right at the top). Now, you might notice that the final softmax block is missing but this is on purpose. That's because in Pytorch often softmax is applied in the loss function (which we will see in the training loop).</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">class Transformer(nn.Module):
+    def __init__(self, dk, num_heads, dmodel, dff, num_blocks, src_vocab_size, tgt_vocab_size, max_tok_len):
+        super().__init__()
+        self.dk = dk
+        self.num_heads = num_heads
+        self.dmodel = dmodel
+        self.dff = dff
+        self.num_blocks = num_blocks
+        self.src_vocab_size = src_vocab_size
+        self.tgt_vocab_size = tgt_vocab_size
+        self.max_tok_len = max_tok_len
+        
+        self.create_layers()
+
+    
+    def create_layers(self):
+        self.positional_encoding = PositionalEncoding(self.dmodel)
+        self.encoder_embedding = InputEmbedding(self.src_vocab_size, self.dmodel)
+        self.decoder_embedding = OutputEmbedding(self.tgt_vocab_size, self.dmodel)
+        
+        self.encoders = nn.ModuleList([Encoder(self.num_heads, self.dmodel, self.dk, self.dff) for _ in range(self.num_blocks)])
+        self.decoders = nn.ModuleList([Decoder(self.num_heads, self.dmodel, self.dk, self.dff) for _ in range(self.num_blocks)])
+
+        self.final_linear = nn.Linear(self.dmodel, self.tgt_vocab_size)
+
+    
+    def forward(self, enc_input, dec_input, padding_mask, causal_mask):
+        encoder_inputs = self.positional_encoding(self.encoder_embedding(enc_input))
+
+        for i in range(self.num_blocks):
+            encoder_inputs = self.encoders[i](encoder_inputs, padding_mask)
+
+        encoder_outputs = encoder_inputs
+
+        decoder_inputs = self.positional_encoding(self.decoder_embedding(dec_input))
+        for i in range(self.num_blocks):
+            decoder_inputs = self.decoders[i](decoder_inputs, encoder_outputs, padding_mask, causal_mask)
+
+        linear_proj = self.final_linear(decoder_inputs)
+        return linear_proj</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Multiple Encoder + Decoder Blocks</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">You'll notice that we don't just define one encoder block and one decoder block as the original Transformer diagram suggests. Instead, we define multiple encoders and decoders within an <code>nn.ModuleList</code> (a PyTorch structure used to store multiple instances of a class). This is because the actual implementation described in the paper "stacks" multiple encoder and decoder blocks on top of each other. Adding more blocks has been shown to improve the transformer's overall performance. The optimal number found in the paper was six encoder and six decoder blocks. Below is a diagram illustrating how information flows between these multiple blocks.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":399,"width":"668px","height":"auto","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-10-at-10.41.51e280afam.png" alt="" class="wp-image-399" style="width:668px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">🏋️ Training</h3>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The final step now we have our model and data is training!</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Prepare Dataloader</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Here I split the data into a train and test set with a 90/10 split and load them into Pytorch Dataloaders.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python"} -->
+<pre class="wp-block-syntaxhighlighter-code">import torch
+import numpy as np
+from torch.utils.data import TensorDataset, DataLoader
+
+dataset = TensorDataset(torch.stack(padded_data_en), torch.stack(padded_data_ge))
+
+train_size = int(0.9 * len(dataset))
+test_size = len(dataset) - train_size
+
+train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, drop_last=True)</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading">Training Loop</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">For this implementation I wrote a very simple training loop. I have not followed all the specifications of AIAYN with regards to epochs and hyperparameters since these are not crucial to the overall understanding and make the overall model slightly too large to train on a regular laptop. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">I have also highlighted three lines specific to training a transformer which I think require a bit of explanation. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><strong>Line 19:</strong> We add the <code>ignore_index=0</code> parameter because 0 represents the padding token, and we want to exclude these tokens from our loss calculations. For example, when you use ChatGPT, you don't see a lot of <code>&lt;pad&gt;</code> tokens at the end of its responses.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:syntaxhighlighter/code {"language":"python","highlightLines":"19, 34, 35"} -->
+<pre class="wp-block-syntaxhighlighter-code">configs = {
+    "dk": 64,
+    "num_heads": 8,
+    "dmodel": 512,
+    "dff": 2048,
+    "num_blocks": 1,
+    "src_vocab_size": len(en_vocab),
+    "tgt_vocab_size": len(ge_vocab),
+    "max_tok_len": max_tok_len - 1,
+}
+
+# Check if CUDA is available
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+model = Transformer(**configs).to(device)
+model.train()
+
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+loss_fn = nn.CrossEntropyLoss(ignore_index=0).to(device)
+
+causal_mask = create_causal_mask(batch_size, max_tok_len-1).to(device)
+losses = []
+
+num_epochs = 10
+for epoch in range(num_epochs):
+    total_loss = 0
+    for batch_idx, batch in enumerate(train_dataloader):
+
+        src, trg = batch
+        src, trg = src.to(device), trg.to(device)
+        
+        padding_mask = create_padding_mask(src[:,1:], configs["max_tok_len"]).to(device)
+
+        output = model(src[:,1:], trg[:,:-1], padding_mask, causal_mask)
+        loss = loss_fn(output.transpose(1, 2), trg[:,1:])
+    
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+        if batch_idx % 50 == 0:
+            print(f'Epoch {epoch} Batch {batch_idx} Loss {loss.item()}')
+
+    losses.append(total_loss / len(train_dataloader))
+    print(f'Epoch {epoch} Average Loss {total_loss / len(train_dataloader)}')</pre>
+<!-- /wp:syntaxhighlighter/code -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><strong>Line 34</strong>: The forward pass of the transformer model, where we pass in the encoder input, decoder input and the two attention masks.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><strong>Line 35</strong>: We take the model output, which in our case is the transformer's German translation of the English <code>src</code> sentence, and compute the loss with the ground truth <code>trg</code> sentence.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The reason I highlighted lines 34 and 35 is because when I was learning how to train a Transformer I was confused about two aspects of their implementation:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"ordered":true} -->
+<ol class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Why do perform the index slicing in the src and trg in both lines 34 and 35?</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">Why do we pass the ground truth sentences in the forward pass of the model in line 34?</li>
+<!-- /wp:list-item --></ol>
+<!-- /wp:list -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">To answer these two questions, I think its first valuable to take a step back and look at the input/output behavior of Transformers (and seq2seq models in general) both during training and inference.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">When performing inference, a fully trained transformer model will start with the encoder input, for instance "Oscar likes to code", and generate one new token in the target vocabulary with each forward pass. Each time a new token is produced this will be added to the decoder input. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">For instance, at t=0, the only input to the decoder is the start-of-sentence token <code>&lt;sos&gt;</code> (this indicates to the decoder that it needs to start producing outputs). At t=1, the input will be "<code>&lt;sos&gt; Oscar</code>" because the transformer should output "Oscar" as the first word in the French sentence. At t=2, the input will be "<code>&lt;sos&gt; Oscar aime</code>", and so on. This process continues, with each timestep adding the next predicted word to the decoder's input until the <code>&lt;eos&gt;</code> token is produced, indicating the end of the sequence. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":416,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-10-at-11.54.32e280afam.png" alt="" class="wp-image-416" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size"><em>Note: The reason we don't include &lt;sos&gt; in the encoder input is simply because it's not necessary since we always pass the entire sequence at once. </em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In this example, we need to invoke the transformer four times to generate the full output of the sentence. This approach, however, presents a significant bottleneck since we have to run an entire forward pass for every token we want to generate. If we were to follow the same approach at training as we do in inference, the training procedure would take an extremely long time. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Instead, during training, we can leverage the batch processing capabilities of the transformer by passing the entire final decoder input in a single pass as shown in the diagram below. Using the Causal mask, we can simulate the experience of running multiple forward passes by preventing the output embeddings from "cheating" and looking ahead at later tokens. The causal in the Masked Multi Head attention ensures that each output embedding only has access to the embeddings that came before it in the sequence, just like if we were to run the sequential generation. </p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":494,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-13-at-11.21.40e280afam.png" alt="" class="wp-image-494" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">For example, consider the token "aimer" at position Y<sub>1</sub>. It will have access to the encoded representation of "oscar likes to code &lt;eos&gt;", provided by the encoder for the entire input sequence. Additionally, it will see "&lt;sos&gt; oscar", which is the partial output sequence generated by the decoder up to that point (look at the third row of the query key matrix). The causal mask guarantees that the decoder can only attend to previously generated tokens, maintaining the autoregressive nature of sequence generation</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">By employing this technique, we can train the transformer more efficiently while ensuring that the model learns to generate each token based on its preceding context, rather than merely copying the input.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":428,"width":"429px","height":"auto","sizeSlug":"large","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-large is-resized"><img src="https://oscarorahilly.com/wp-content/uploads/2024/06/screenshot-2024-06-10-at-5.53.40e280afpm.png?w=947" alt="" class="wp-image-428" style="width:429px;height:auto" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">Now that we have looked at the input/output behavior of the transformer, lines 34 &amp; 35 should make a bit more sense. In line 34 we get the model prediction for a given batch of data. To do so we pass four parameters to the model. The first is <code>src[:,1:]</code> which is the input sequence with the <code>&lt;sos&gt;</code> token chopped off. The second is <code>trg[:,:-1]</code> which is the decoder input with the <code>&lt;eos&gt;</code> token removed. The third and fourth parameters are the two masks used in the attention blocks.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">In line 34, we compute the loss of the model output with respect to the ground truth source label. The ground truth label is <code>trg[:,1:]</code> which is the source label with the <code>&lt;sos&gt; </code>token removed.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">The reason we remove the &lt;sos&gt; token from the decoder input and remove the &lt;eos&gt; token from the target label is to ensure that the token at position i matches the corresponding index of the token it is trying to predict in the output. For instance, <code>y<sub>0</sub> = &lt;sos&gt;</code> is used as the decoder input to predict <code>ŷ<sub>0</sub> = oscar</code>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">So to go back to the two original Questions</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list {"ordered":true} -->
+<ol class="wp-block-list"><!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">The reason we remove the &lt;sos&gt; token in <code>src[:,1:]</code> is because the &lt;sos&gt; token is unnecessary information for the encoder. The reason we remove the &lt;eos&gt; from the decoder input is to ensure we have this offsetting property with model outputs.</li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item {"fontSize":"small"} -->
+<li class="has-small-font-size">The reason we pass the entire ground truth sentence is so we can run an entire sequence generation in one pass rather than seq_len passes. Moreover, the causal mask ensures that we maintin the autoregressive generation property we need for inference time.</li>
+<!-- /wp:list-item --></ol>
+<!-- /wp:list -->
+
+<!-- wp:spacer {"height":"25px"} -->
+<div style="height:25px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">✅ We are Done!</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">If you have stuck around to this point, you are now ready to start training your very own Transformer. If you would like to see the full notebook which has all the code I have shown here it will be available on my GitHub. If you enjoyed this post or learnt something new please share this with others. I spent a lot of time creating this post and would love your feedback so also feel free to leave a comment. Thank you for reading! 😀</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p></p>
+<!-- /wp:paragraph -->

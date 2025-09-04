@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Confidence Calibration: What Really Drives AI Uncertainty? - Oscar's Blog</title>
+    <meta name="description" content="A deep dive into how reinforcement learning trained models determine confidence scores and whether they're actually based on logical reasoning or something else entirely.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">Aug 29, 2024</div>
+                <h1 class="single-post-title">🔍 Confidence Calibration: What Really Drives AI Uncertainty?</h1>
+                <div class="post-meta">by Oscar O'Rahilly in Research</div>
+            </header>
+            
+            <div class="single-post-content">
+                <h2>Introduction</h2>
+                <p>A key limitation of high performing LLMs is their ability to express uncertainty in their outputs. This creates serious problems in high stakes scenarios like medicine or law, where the risks of false positives can be extremely high. Confidence estimation is crucial for safe deployment: in these critical contexts, what we need is a model that knows when not to trust itself.</p>
+                
+                <p>I recently read the paper: <a href="https://www.arxiv.org/pdf/2507.16806" target="_blank" rel="noopener noreferrer"><em>Beyond Binary Rewards</em></a> by Damani et al. They proposed a reinforcement learning scheme that leverages the typical RLHF framework used to train high performing reasoning models to also output an answer confidence score and associated analysis explaining that score.</p>
+                
+                <p>One of the topics that drew me to mechanistic interpretability was understanding the internal reasoning processes of LLMs, how they arrive at decisions and whether their explanations are faithful. When reading <em>Beyond Binary Rewards</em>, it struck me that these new confidence outputs deserve the same level of scrutiny. When the model tells us "I am 70% sure of this answer," what exactly is that number grounded in? Is it derived from the logical structure of the solution, or something else entirely?</p>
+                
+                <p>This project is a first attempt at exploring that question.</p>
+
+                <h2>Goal</h2>
+                <p>My overarching goal was to get a clearer sense of how the reinforcement learning trained, calibrated reasoning model produced in <em>Beyond Binary Rewards</em>, they dub the RLCR model, internally determines its confidence score and corresponding analysis of its uncertainty. Specifically, I wanted to know:</p>
+                
+                <p><strong>Does the model behave like a human expert, focusing primarily on the logical consistency of the solution? Or is it sensitive to other cues that might not matter to a human at all, things like minor spelling mistakes, grammatical noise, or other surface features of the text?</strong> In other words, when the confidence value drops, is that because the reasoning itself is shaky, or because the trace "looks" unusual?</p>
+                
+                <p>Answering these questions felt important not only for interpretability, but also for calibration. If the confidence signal is being driven by shallow cues rather than deep reasoning, that would place real limits on how much we can trust it.</p>
+
+                <h2>Background and Dataset Choice</h2>
+                <p>The <em>Beyond Binary Rewards</em> paper trained reasoning with confidence models using the typical cold start SFT + RLHF scheme popularised by Deepseek. The deviation is that the primary reward mechanism optimized over in the RL stage is a reward function that augments a binary correctness score with a Brier score.</p>
+                
+                <div class="callout">
+                    <h4>What is a Brier Score?</h4>
+                    <p>The Brier score measures the accuracy of probabilistic predictions by taking the mean squared difference between predicted probabilities and actual outcomes. Lower scores are better (0 is perfect), and it penalizes both overconfident wrong predictions and underconfident correct ones.</p>
+                </div>
+                
+                <p>The binary correctness score encourages the model to produce correct answers while the Brier component encourages the model to avoid extreme miscalibration by penalizing overconfident errors much more heavily than moderate ones.</p>
+                
+                <p>Formally, given a predictor that produces an output \(y\), a confidence \(q\), and ground truth output \(y^*\):</p>
+                
+                <div class="math-block">
+                    \[R_{\text{RLCR}}(y, q, y^*) = R_{\text{correctness}}(y, y^*) + R_{\text{Brier}}(y, q, y^*) = \mathbb{1}_{y \equiv y^*} - \left(q - \mathbb{1}_{y \equiv y^*}\right)^2\]
+                </div>
+                
+                <p>Damani et al show impressive results: RLCR significantly enhances calibration across various datasets, both in domain and out of domain, without sacrificing accuracy. They used a Qwen2.5-7B-base as their base model and trained on a modified Big-Math and HotpotQA dataset.</p>
+                
+                <p>For the dataset, I focused exclusively on their math reasoning benchmark, <a href="https://huggingface.co/datasets/mehuldamani/big-math-digits" target="_blank" rel="noopener noreferrer">Big-Math Digits</a>, and utilized their <a href="https://huggingface.co/mehuldamani/big-math-digits-v2-brier-base-tabc" target="_blank" rel="noopener noreferrer">model</a> post-trained using RLCR on this dataset. I chose this dataset for three reasons:</p>
+                
+                <ol>
+                    <li><strong>Ease of intervention:</strong> it is straightforward to inject spurious reasoning steps or alter intermediate calculations in math problems, compared to more open-ended textual datasets like HotPotQA.</li>
+                    <li><strong>Practicality under time constraints:</strong> math problems tend to have shorter prompts and outputs, which allowed me to run more experiments under limited GPU memory and time.</li>
+                    <li><strong>Connection to prior work:</strong> I wanted to experiment with the sentence-type taxonomy introduced in the <a href="https://arxiv.org/pdf/2506.19143" target="_blank" rel="noopener noreferrer"><em>Thought Anchors</em></a> paper, and since they also worked with math traces, I could bootstrap some of their classification categories.</li>
+                </ol>
+
+                <h2>Data</h2>
+                <p>In total, I worked with a set of 100 output traces. While I acknowledge this is a small number — and a limitation in terms of statistical power — it was the right trade-off for me given GPU RAM constraints and the need to iterate in the ~12 hour window.</p>
+                
+                <p>To generate my 100 output traces I took 100 questions from the test set of the <a href="https://huggingface.co/datasets/mehuldamani/big-math-digits" target="_blank" rel="noopener noreferrer">Big-Math Digits</a> dataset and performed a full model generation with a temperature of 0.7. I have included an example output below of what a complete response to a question from that dataset looks like.</p>
+                
+                <div class="model-output-example">
+                    <h4>RLCR</h4>
+                    
+                    <div class="output-section">
+                        <h5>&lt;think&gt;</h5>
+                        <p>Given that p(x) is a quadratic polynomial with integer coefficients and 4 - √11 is a root, the other root must be 4 + √11. This means we can write p(x) = (x - (4 - √11))(x - (4 + √11)) = (x - 4)² - 11 = x² - 8x + 5. Then, p(3) = -10 and p(4) = -11, so p(3)/p(4) = 10/11.</p>
+                        <h5>&lt;/think&gt;</h5>
+                    </div>
+                    
+                    <div class="output-section">
+                        <h5>&lt;answer&gt;</h5>
+                        <p>0.909</p>
+                        <h5>&lt;/answer&gt;</h5>
+                    </div>
+                    
+                    <div class="output-section">
+                        <h5>&lt;analysis&gt;</h5>
+                        <p>The reasoning is mathematically sound, but the final answer is reported in decimal form (0.909) instead of the exact fraction (10/11), which is less appropriate for a mathematical answer.</p>
+                        <h5>&lt;/analysis&gt;</h5>
+                    </div>
+                    
+                    <div class="output-section">
+                        <h5>&lt;confidence&gt;</h5>
+                        <p>0.3</p>
+                        <h5>&lt;/confidence&gt;</h5>
+                    </div>
+                </div>
+                <div class="figure-spacer"></div>
+                
+                <p>In the rest of this post, I will refer to each block as the <strong><em>think</em></strong>, <strong><em>answer</em></strong>, <strong><em>analysis</em></strong>, and <strong><em>confidence</em></strong> section.</p>
+
+                <h2>Method: Error Injection</h2>
+                <p>To test what actually drives the <em>confidence</em> score and associated <em>analysis</em> section, I wanted to come up with an experiment to test how the <em>confidence</em> and <em>analysis</em> is affected when we artificially add different kinds of uncertainty to the <em>think</em> section.</p>
+                
+                <p>In order to generate this uncertainty in the <em>think</em> section I devised two separate error injection tests:</p>
+
+                <h3>1. Logical Errors</h3>
+                <ul>
+                    <li>I edited reasoning traces by injecting three small but meaningful mistakes.</li>
+                    <li>Examples included altering a number in an intermediate step (e.g., writing 12 instead of 21), redefining a formula incorrectly (\(\sin\theta = \frac{\text{opp}}{\text{hyp}} \to \sin\theta = \frac{\text{hyp}}{\text{opp}}\)) or inserting an arithmetic slip.</li>
+                    <li>Importantly I did not propagate the errors forward. The final answer remained correct, so any confidence changes would have to come from the internal recognition that "something along the way didn't add up."</li>
+                    <li>With these logical errors I wanted to see if the model is truly caring about the validity of the underlying <em>think</em> trace.</li>
+                </ul>
+                
+                <figure class="post-figure" style="max-width: 925px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/Screenshot_2025-08-29_at_7.10.25_PM.png" alt="Example of logical error injection in mathematical reasoning" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;">
+                    <figcaption style="text-align: center;"><em>Example of logical error injection: altering intermediate calculations while keeping the final answer correct</em></em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <h3>2. Grammatical Errors</h3>
+                <ul>
+                    <li>I injected purely surface level noise, such as misspellings ("equation" → "equashen"), grammatical slips ("we are" → "we is"), bad punctuation, odd capitalization, repetition, and simple homophone swaps (their → they're).</li>
+                    <li>These perturbations did not affect the logic of the trace at all.</li>
+                    <li>The grammatical errors are a way to see if mistakes unrelated to the validity of the <em>think</em> reasoning actually have any affect on the <em>confidence</em> or <em>analysis</em>.</li>
+                </ul>
+                
+                <figure class="post-figure" style="max-width: 925px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/Screenshot_2025-08-29_at_7.19.20_PM.png" alt="Example of grammatical error injection" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;">
+                    <figcaption style="text-align: center;"><em>Example of grammatical error injection: adding spelling and grammar mistakes without affecting logical content</em></em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <div class="callout">
+                    <h4>How did I generate the injections?</h4>
+                    <p>In order to generate these error injections I used <a href="https://platform.openai.com/docs/models/gpt-5-mini" target="_blank" rel="noopener noreferrer">GPT-5-mini</a>. I verified that GPT-5-mini was indeed injecting these errors each time using a simple Regex based checker.</p>
+                </div>
+                
+                <p>For both conditions, I re-generated outputs with a non-zero temperature of 0.7. To reduce noise from stochasticity, I repeated each experiment five times and took the output that had the majority <em>confidence</em> score. If no entry had the majority I picked a random output trace. Importantly, I wanted to test whether the confidence and associated analysis were actually concerned with important intermediate logical errors which should reduce confidence in the final answer vs small grammatical errors that have no bearing on the overall logical steps.</p>
+
+                <h2>Results: Logical Errors</h2>
+                <p>The logical error injection produced some interesting findings:</p>
+                
+                <ul>
+                    <li>29% of traces experienced a drop in confidence when logical errors were introduced.</li>
+                    <li>The mean decrease among those cases was −0.2 points.</li>
+                    <li>A majority (62%) showed no change at all.</li>
+                </ul>
+                
+                <figure class="post-figure" style="max-width: 650px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/Screenshot_2025-08-29_at_6.08.40_PM.png" alt="Distribution of confidence changes for logical errors" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                    <figcaption style="text-align: center;"><em>Distribution of confidence score changes when logical errors are injected into reasoning traces</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Count</th>
+                            <th>Avg Change</th>
+                            <th>Range</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Category">All traces</td>
+                            <td data-label="Count">100</td>
+                            <td data-label="Avg Change">-0.0485</td>
+                            <td data-label="Range">-0.500 to 0.200</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Changed (any direction)</td>
+                            <td data-label="Count">38</td>
+                            <td data-label="Avg Change">-0.1276</td>
+                            <td data-label="Range">-0.500 to 0.200</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Decreased only</td>
+                            <td data-label="Count">29</td>
+                            <td data-label="Avg Change">-0.2086</td>
+                            <td data-label="Range">-0.500 to -0.100</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Increased only</td>
+                            <td data-label="Count">9</td>
+                            <td data-label="Avg Change">0.1333</td>
+                            <td data-label="Range">0.100 to 0.200</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p>These results point towards the fact that the model's produced confidence score is negatively affected by injection of logical errors into the mathematical elements of the think trace. Interestingly, when I scale up the number of logical errors from 3 to 6 there is relatively little change in both the number of traces affected across each category and also the average change. Furthermore, 62% of samples show the same direction of effect between the 3 and 6 error setting - meaning there is some correlation between the kinds of samples that are affected by logical error injection. Perhaps on more complicated questions, small errors are much harder to spot.</p>
+                
+                <figure class="post-figure" style="max-width: 650px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/Screenshot_2025-08-29_at_8.53.27_PM.png" alt="Comparison between 3 and 6 logical errors" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                    <figcaption style="text-align: center;"><em>Comparison of results between injecting 3 vs 6 logical errors, showing consistent patterns</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <!-- <p>The model was trained for 450 steps, and the following are two examples of the model's reasoning traces after RL post-training.</p> -->
+                <div class="note-box" style="background-color: #f8f8f8; padding: 20px;  padding-bottom: 2px; margin: 20px 0; border-left: 4px solid #888888;">
+                    <h4>Note on correlation 📝</h4>
+                    <p>This 62% agreement rate is statistically significant (p < 0.001) and represents a moderate correlation (r = 0.42)</p>
+                </div>
+                
+                <p>The next question is whether the model honestly verbalizes the reasons for these negative changes in its traces.</p>
+
+                <h3>Decreased Examples: Did the model verbally acknowledge the logical errors?</h3>
+                <p>We have evidence that the model confidence score is negatively impacted by logical error injection. However, did it manage to accurately capture these errors in natural language in its <em>analysis section?</em></p>
+                
+                <p>If we analyze the 29 samples which saw a negative decrease in confidence score we find that 22 out of 29 of them explicitly mention one of the three injected errors.</p>
+                
+                <figure class="post-figure" style="max-width: 550px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/Screenshot_2025-08-29_at_6.35.14_PM.png" alt="Analysis of error mentions by confidence change" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;">
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <p>Amongst the unchanged and increased category we see much fewer mentions, which makes sense.</p>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Confidence Change</th>
+                            <th>Mentioned Error</th>
+                            <th>Didn't Mention Error</th>
+                            <th>Total Traces</th>
+                            <th>% Mentioned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Confidence Change">Increased conf</td>
+                            <td data-label="Mentioned Error">0</td>
+                            <td data-label="Didn't Mention Error">9</td>
+                            <td data-label="Total Traces">9</td>
+                            <td data-label="% Mentioned">0%</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Confidence Change">Unchanged conf</td>
+                            <td data-label="Mentioned Error">5</td>
+                            <td data-label="Didn't Mention Error">57</td>
+                            <td data-label="Total Traces">62</td>
+                            <td data-label="% Mentioned">8.1%</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td data-label="Confidence Change"><strong>Decreased conf</strong></td>
+                            <td data-label="Mentioned Error"><strong>22</strong></td>
+                            <td data-label="Didn't Mention Error"><strong>7</strong></td>
+                            <td data-label="Total Traces"><strong>29</strong></td>
+                            <td data-label="% Mentioned"><strong>75.9%</strong></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Confidence Change">Total</td>
+                            <td data-label="Mentioned Error">27</td>
+                            <td data-label="Didn't Mention Error">73</td>
+                            <td data-label="Total Traces">100</td>
+                            <td data-label="% Mentioned">27%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Why so many Unchanged Traces?</h3>
+                <p>In the unchanged cases, very few analysis traces (5 out of 62) even mentioned the injected errors. This suggests that while the model sometimes notices and penalizes errors, it is often blind to them. I also expected to see more explicit mentions of an error in the cases where the confidence score dropped.</p>
+                
+                <p>To dig deeper into why so few analysis sections referenced the errors (27 total) I examined where the tokens in the <em>analysis</em> section were attending within the <em>think</em> trace. My goal was to understand what types of sentences the analysis section as a whole was focusing on. Since the analysis sections acknowledge injected errors less frequently than the confidence scores penalize them, my hypothesis was that they might be "looking at" different parts of the reasoning trace.</p>
+                
+                <p>Because I wanted to look at this at the sentence level and more specifically, wanted to understand the types of sentences each section was attending to, I leveraged the ideas from the <a href="https://arxiv.org/pdf/2506.19143" target="_blank" rel="noopener noreferrer"><em>Thought Anchors</em></a> paper. Specifically, for my use case I did the following:</p>
+                
+                <ol>
+                    <li><strong>Sentence Segmentation and Categorization:</strong> I split the text within the <em>think</em> section into chunks and classified them using the <em>Thought Anchors</em> taxonomy (problem understanding, solution steps, verification, etc.).</li>
+                    <li><strong>Attention Extraction:</strong> I then extracted attention patterns from the model's final layer, focusing on how tokens in the <em>analysis</em> section attended back to the <em>think</em> section. I then aggregated token-level weights into sentence-level scores by summing attention across each sentence span.</li>
+                    <li><strong>Category-Level Analysis:</strong> I aggregated sentence-level scores by category to compute how much attention the <em>analysis</em> section gave to each type of reasoning (problem setup vs. calculation vs. error checking).</li>
+                    <li><strong>Top-K Sentence Categories:</strong> For each trace, I identified the top-3 sentences in the <em>think</em> section that received the highest attention from the <em>analysis</em> section, and then recorded the categories those sentences belonged to. This let me see which types of reasoning content dominated the analysis-to-think attention focus.</li>
+                </ol>
+                
+                <div class="callout">
+                    <h4>Why extract attention from the final layer?</h4>
+                    <p>While I could have picked from any of the 32 layers, I chose the final layer as I wanted a high level notion of categories and layers later on typically focus on a larger set of aggregated features. Moreover, I didn't choose a specific head from the final layer. Instead I simply averaged the attention map from all heads.</p>
+                </div>
+                
+                <p>The results showed a striking pattern: the <em>analysis</em> sections primarily attended to <em>plan generation</em>, <em>fact retrieval</em> and <em>problem setup</em> whereas the confidence section is attending far more to the active computation sentences. This suggests that the analysis generation operates at a more abstract level, emphasizing overall coherence rather than step-by-step checking. Mechanistically, this helps explain why analysis sections often fail to explicitly acknowledge errors, even when the confidence scores are appropriately penalized—they are literally not "looking" at the errorful parts of the reasoning trace.</p>
+                
+                <p>Now obviously aggregated attention cannot so simply be interpreted as just where that individual section is looking. For one thing, we only looked at one layer of attention and also attention patterns are a lot more complex and nuanced than I am describing it as. However, what I wanted to draw attention to (no pun intended) with this analysis was just the difference in these patterns as a potential explanation for the difference in behavior we see in the <em>confidence</em> and <em>analysis</em> sections in response to the error injections.</p>
+                
+                <figure class="post-figure" style="max-width: 1300px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/category_attention_k3.png" alt="Attention patterns by sentence category" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                    <figcaption style="text-align: center;"><em>Attention patterns showing which sentence categories the analysis section focuses on most</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <div class="callout">
+                    <h4>Sentence Taxonomy</h4>
+                    <ol>
+                        <li><strong>Problem Setup:</strong> Parsing or rephrasing the problem</li>
+                        <li><strong>Plan Generation:</strong> Stating or deciding on a plan of action, meta-reasoning</li>
+                        <li><strong>Fact Retrieval:</strong> Recalling facts, formulas, problem details without computation</li>
+                        <li><strong>Active Computation:</strong> Algebra, calculations, or other manipulations toward the answer</li>
+                        <li><strong>Uncertainty Management:</strong> Expressing confusion, re-evaluating, including backtracking</li>
+                        <li><strong>Result Consolidation:</strong> Aggregating intermediate results, summarizing, or preparing</li>
+                        <li><strong>Self Checking:</strong> Verifying previous steps, checking calculations, and re-confirmations</li>
+                        <li><strong>Final Answer Emission:</strong> Explicitly stating the final answer</li>
+                    </ol>
+                </div>
+
+                <h2>Results: Grammatical Errors</h2>
+                <p>The grammatical injection produced an even more surprising outcome.</p>
+                
+                <figure class="post-figure" style="max-width: 625px; margin-left: auto; margin-right: auto;">
+                    <img src="../imgs/confidence_calibration/image.png" alt="Distribution of confidence changes for grammatical errors" class="post-image" style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+                    <figcaption style="text-align: center;"><em>Distribution of confidence score changes when grammatical errors are injected into reasoning traces</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+                
+                <ul>
+                    <li>Many traces showed drops in confidence, although the average size of the decrease was smaller than in the logical case.</li>
+                    <li>Crucially, not a single <em>analysis</em> section mentioned grammar, spelling, or punctuation as a reason in its analysis section.</li>
+                    <li>Even after manually checking all affected samples, I confirmed that none of the confidence justifications pointed to these surface changes.</li>
+                </ul>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Count</th>
+                            <th>Avg Change</th>
+                            <th>Range</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Category">All traces</td>
+                            <td data-label="Count">100</td>
+                            <td data-label="Avg Change">-0.0070</td>
+                            <td data-label="Range">-0.300 to 0.500</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Changed (any direction)</td>
+                            <td data-label="Count">36</td>
+                            <td data-label="Avg Change">-0.0194</td>
+                            <td data-label="Range">-0.300 to 0.500</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Decreased only</td>
+                            <td data-label="Count">23</td>
+                            <td data-label="Avg Change">-0.1565</td>
+                            <td data-label="Range">-0.300 to -0.100</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Category">Increased only</td>
+                            <td data-label="Count">13</td>
+                            <td data-label="Avg Change">0.2231</td>
+                            <td data-label="Range">0.100 to 0.500</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Why do grammatical errors cause drops?</h2>
+                <p>The most plausible explanation I can think of is distributional. During pretraining, LLMs develop a strong sense of grammatically correct language, especially within domains where pretraining data contains a lot of accurate language like in mathematical reasoning contexts. During RL fine-tuning for reasoning, the traces are clean and fluent. As a result, when the model sees something linguistically unusual, it implicitly treats it as "out of distribution," which in turn lowers its internal confidence signal.</p>
+                
+                <p>The striking part is that this happens without any reflection in the analysis text. The confidence mechanism "knows something is off," but the analysis channel is not able to verbalize why. This is one of the reasons why chain of thought reasoning has been under so much scrutiny recently - it is very often the case that what a model verbalizes and the underlying processes are different.</p>
+                
+                <div class="callout">
+                    <h4>If I had more time 😅</h4>
+                    <p>I would like to run a finer-grained attribution study: tracing attention from the confidence head to the specific tokens containing errors, and measuring whether those tokens disproportionately influence the confidence output. This could help explain whether the model's calibration is being skewed by surface features.</p>
+                </div>
+
+                <h2>Conclusion</h2>
+                <p>This study suggests that confidence scores in the RLCR models are not purely a reflection of logical correctness. Instead, they can be very easily shaped by a mix of shallow distributional cues and occasional recognition of explicit errors.</p>
+                
+                <p>Moreover, these logical mistakes sometimes lower confidence, but often go unnoticed. Grammatical mistakes, which have no effect on logic, can also cause confidence drops, even though the model never acknowledges them in its explanations.</p>
+                
+                <p><strong>This raises an important interpretability concern: these confidence values may not be as "reason-based" as they appear, and their accompanying analysis traces can be misleading.</strong> If these models are to be used in safety-critical contexts, we need to develop better tools to understand and audit the signals driving calibration.</p>
+
+                <h2>Limitations and Reflections</h2>
+                <p>This project was necessarily small in scale. Working with only 100 samples meant that I could not make broad statistical claims, and the limited number of re-generations meant there is always some uncertainty from randomness. GPU memory constraints also shaped my choices, both in the size of the dataset I selected and in the kinds of experiments I could feasibly run in 12 hours. These are practical trade-offs, but they also helped me think carefully about how to design interventions that could be maximally revealing despite the constraints.</p>
+                
+                <p>What surprised me most was how consistently grammatical noise lowered confidence without ever being mentioned in the analysis traces. Going into the project I expected the opposite: that logical errors would dominate the signal, and grammar would be ignored. Instead, I came away with a new appreciation for how much calibration can be tied to distributional cues that have little to do with the reasoning itself. That feels like both a warning sign and an opportunity for deeper mechanistic study.</p>
+                
+                <p>If I had more time, I would push further in three directions. First, expanding the dataset and running more systematic error injections to confirm these patterns. Second, diving into token-level attribution to see if grammatical perturbations disproportionately attract attention in the confidence head. And third, experimenting with targeted edits to the sentence categories most influential for confidence (plan generation, fact retrieval, problem setup) to see whether the model's calibration can be shifted in predictable ways.</p>
+            </div>
+        </div>
+    </article>
+</body>
+</html>

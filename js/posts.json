@@ -1,5 +1,12 @@
 [
   {
+    "date": "2025-08-29",
+    "title": "🔍 Confidence Calibration: What Really Drives AI Uncertainty?",
+    "slug": "confidence_calibration_ai_uncertainty",
+    "excerpt": "A deep dive into how reinforcement learning trained models determine confidence scores and whether they're actually based on logical reasoning or something else entirely. Through systematic error injection experiments, I uncover surprising insights about what really drives AI uncertainty.",
+    "category": "Research"
+  },
+  {
     "date": "2025-03-26",
     "title": "📄 Paper Highlight 6 – SFT Memorizes, RL Generalizes",
     "slug": "paper_highlight_6_rl_vs_sft",
@@ -25,9 +32,8 @@
     "title": "🧠 Genuine Reasoning or Clever Mimicry? Evidence for Algorithmic Strategies in Language Models",
     "slug": "reasoning_traces_grpo/reasoning-traces-grpo-llms",
     "excerpt": "Do LLMs really reason, or just mimic? I train a model on the Countdown game and find it learns a true algorithm: always start with the biggest number. By peeking inside, I show this isn't just mimicry—it's real algorithmic strategy.",
-    "category": "Technology"
+    "category": "Research"
   },
-
   {
     "date": "2025-01-15",
     "title": "📄 Paper Highlight 5 – DeepSeek-R1: Incentivizing Reasoning Capability in LLMs",
@@ -36,52 +42,10 @@
     "category": "Technology"
   },
   {
-    "date": "2024-12-10",
-    "title": "Effective Fine-tuning Strategies for Foundation Models",
-    "slug": "2024-12-10-fine-tuning-strategies",
-    "excerpt": "A comprehensive guide to different approaches for fine-tuning large language models with pros and cons of each method.",
-    "category": "Development"
-  },
-  {
-    "date": "2023-05-15",
-    "title": "Building My First Project with React and Node.js",
-    "slug": "building-react-nodejs-project",
-    "excerpt": "Over the past month, I've been working on building a full-stack application using React for the frontend and Node.js for the backend. Here's what I learned along the way.",
-    "category": "Development"
-  },
-  {
-    "date": "2023-04-28",
-    "title": "The Books That Changed My Perspective on Software Development",
-    "slug": "books-software-development",
-    "excerpt": "In this post, I share the books that have profoundly influenced my approach to software development and problem-solving in general.",
-    "category": "Development"
-  },
-  {
-    "date": "2023-04-10",
-    "title": "Lessons Learned After a Year of Remote Work",
-    "slug": "remote-work-lessons",
-    "excerpt": "It's been a full year since I transitioned to working remotely full-time. Here are my key takeaways and strategies for staying productive and balanced.",
-    "category": "Career"
-  },
-  {
-    "date": "2023-03-22",
-    "title": "How to Set Up a Productive Development Environment",
-    "slug": "productive-dev-environment",
-    "excerpt": "A well-configured development environment can significantly boost your productivity. In this post, I share my setup and tools that have made coding more efficient and enjoyable.",
-    "category": "Development"
-  },
-  {
-    "date": "2023-03-08",
-    "title": "Five Design Principles Every Developer Should Know",
-    "slug": "design-principles-developers",
-    "excerpt": "Understanding basic design principles can help developers create more intuitive and visually appealing applications. Here are five key principles to incorporate into your next project.",
-    "category": "Design"
-  },
-  {
-    "date": "2023-02-17",
-    "title": "Getting Started with Test-Driven Development",
-    "slug": "test-driven-development-guide",
-    "excerpt": "Test-driven development can lead to more robust and maintainable code. This beginner-friendly guide explains how to incorporate TDD into your workflow.",
-    "category": "Development"
+    "date": "2024-07-29",
+    "title": "🤖 From Scratch: The  Transformer",
+    "slug": "from_scratch_1_transformer_complete",
+    "excerpt": "A deep dive into the Transformer architecture, exploring its components and how they work together to enable powerful language modeling.",
+    "category": "Technology"
   }
 ]
