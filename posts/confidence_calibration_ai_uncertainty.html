@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../js/components.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -37,6 +38,11 @@
             </header>
             
             <div class="single-post-content">
+                <div class="callout">
+                    <h4>Time Constraint Note</h4>
+                    <p>I challenged myself to come up with a research problem, do the background work, and execute the project all within about 12 hours. I want to make this a regular habit to push myself to get better at quickly turning ideas into action.</p>
+                </div>
+
                 <h2>Introduction</h2>
                 <p>A key limitation of high performing LLMs is their ability to express uncertainty in their outputs. This creates serious problems in high stakes scenarios like medicine or law, where the risks of false positives can be extremely high. Confidence estimation is crucial for safe deployment: in these critical contexts, what we need is a model that knows when not to trust itself.</p>
                 
@@ -395,7 +401,19 @@
                 
                 <p>If I had more time, I would push further in three directions. First, expanding the dataset and running more systematic error injections to confirm these patterns. Second, diving into token-level attribution to see if grammatical perturbations disproportionately attract attention in the confidence head. And third, experimenting with targeted edits to the sentence categories most influential for confidence (plan generation, fact retrieval, problem setup) to see whether the model's calibration can be shifted in predictable ways.</p>
             </div>
+            
+            <!-- Post Navigation -->
+            <div id="post-navigation-container">
+                <!-- Navigation will be dynamically generated here -->
+            </div>
         </div>
     </article>
+
+    <script>
+        // Generate post navigation when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            generatePostNavigation('confidence_calibration_ai_uncertainty');
+        });
+    </script>
 </body>
 </html>
