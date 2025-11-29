@@ -1,3 +1,8 @@
+// JSONBin Configuration
+const JSONBIN_BIN_ID = '692a5ff4d0ea881f4006f223';
+const JSONBIN_API_KEY = '$2a$10$Mk1FfCJpoY8FIOQJrMLw..vkr/0x2cLx7xgOhlaa./Kgf1ZkQJLz6';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
 // State
 let rankedBooks = JSON.parse(localStorage.getItem('beli_ranked_books')) || [];
 let wishlistBooks = JSON.parse(localStorage.getItem('beli_wishlist_books')) || [];
@@ -6,6 +11,7 @@ let binarySearch = { low: 0, high: 0, mid: 0 };
 let currentDetailBookIndex = null;
 let currentDetailType = null; // 'ranked' or 'wishlist'
 let activeTab = 'rankings';
+let isSyncing = false;
 
 // DOM Elements
 const searchInput = document.getElementById('search-input');
@@ -20,11 +26,66 @@ const bookDetailModal = document.getElementById('book-detail-modal');
 let searchTimeout = null;
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Try to load from cloud first, fall back to localStorage
+    await loadFromCloud();
     renderRankings();
     renderWishlist();
     setupEventListeners();
 });
+
+// Cloud sync functions
+async function loadFromCloud() {
+    try {
+        const response = await fetch(`${JSONBIN_URL}/latest`, {
+            headers: {
+                'X-Master-Key': JSONBIN_API_KEY
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.record) {
+                // Use cloud data if it exists
+                if (data.record.rankedBooks && data.record.rankedBooks.length > 0) {
+                    rankedBooks = data.record.rankedBooks;
+                    localStorage.setItem('beli_ranked_books', JSON.stringify(rankedBooks));
+                }
+                if (data.record.wishlistBooks && data.record.wishlistBooks.length > 0) {
+                    wishlistBooks = data.record.wishlistBooks;
+                    localStorage.setItem('beli_wishlist_books', JSON.stringify(wishlistBooks));
+                }
+                console.log('Loaded data from cloud');
+            }
+        }
+    } catch (error) {
+        console.log('Could not load from cloud, using local data:', error);
+    }
+}
+
+async function saveToCloud() {
+    if (isSyncing) return;
+    isSyncing = true;
+    
+    try {
+        await fetch(JSONBIN_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY
+            },
+            body: JSON.stringify({
+                rankedBooks: rankedBooks,
+                wishlistBooks: wishlistBooks
+            })
+        });
+        console.log('Saved to cloud');
+    } catch (error) {
+        console.error('Could not save to cloud:', error);
+    } finally {
+        isSyncing = false;
+    }
+}
 
 function setupEventListeners() {
     // Search input
@@ -266,11 +327,13 @@ function handleComparison(newBookIsBetter) {
 
 function saveAndRender() {
     localStorage.setItem('beli_ranked_books', JSON.stringify(rankedBooks));
+    saveToCloud(); // Sync to cloud
     renderRankings();
 }
 
 function saveWishlist() {
     localStorage.setItem('beli_wishlist_books', JSON.stringify(wishlistBooks));
+    saveToCloud(); // Sync to cloud
 }
 
 function renderRankings() {
