@@ -1,17 +1,44 @@
 // PIN Protection
 const CORRECT_PIN = '9999';
+let isAuthenticated = false;
 
-// Check if already authenticated this session
-if (sessionStorage.getItem('juju_authenticated') === 'true') {
-    document.getElementById('pin-gate').classList.add('hidden');
-    document.getElementById('app-container').classList.remove('hidden');
-} else {
+// JSONBin Configuration
+const JSONBIN_BIN_ID = '692a5ff4d0ea881f4006f223';
+const JSONBIN_API_KEY = '$2a$10$Mk1FfCJpoY8FIOQJrMLw..vkr/0x2cLx7xgOhlaa./Kgf1ZkQJLz6';
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+// State
+let rankedBooks = JSON.parse(localStorage.getItem('beli_ranked_books')) || [];
+let wishlistBooks = JSON.parse(localStorage.getItem('beli_wishlist_books')) || [];
+let pendingBook = null;
+let binarySearch = { low: 0, high: 0, mid: 0 };
+let currentDetailBookIndex = null;
+let currentDetailType = null; // 'ranked' or 'wishlist'
+let activeTab = 'rankings';
+let isSyncing = false;
+
+// DOM Elements
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+const rankingsList = document.getElementById('rankings-list');
+const wishlistList = document.getElementById('wishlist-list');
+const mainView = document.getElementById('main-view');
+const comparisonView = document.getElementById('comparison-view');
+const bookDetailModal = document.getElementById('book-detail-modal');
+
+// Search debounce
+let searchTimeout = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
     setupPinGate();
-}
+});
 
 function setupPinGate() {
     const pinDigits = document.querySelectorAll('.pin-digit');
     const pinError = document.getElementById('pin-error');
+    const pinGate = document.getElementById('pin-gate');
+    const appContainer = document.getElementById('app-container');
     
     pinDigits.forEach((input, index) => {
         input.addEventListener('input', (e) => {
@@ -57,10 +84,11 @@ function setupPinGate() {
         
         if (enteredPin.length === 4) {
             if (enteredPin === CORRECT_PIN) {
-                // Correct PIN
-                sessionStorage.setItem('juju_authenticated', 'true');
-                document.getElementById('pin-gate').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
+                // Correct PIN - unlock the app
+                isAuthenticated = true;
+                pinGate.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                initializeApp();
             } else {
                 // Wrong PIN
                 pinError.classList.remove('hidden');
@@ -79,44 +107,16 @@ function setupPinGate() {
     }
     
     // Focus first input
-    pinDigits[0].focus();
+    setTimeout(() => pinDigits[0].focus(), 100);
 }
 
-// JSONBin Configuration
-const JSONBIN_BIN_ID = '692a5ff4d0ea881f4006f223';
-const JSONBIN_API_KEY = '$2a$10$Mk1FfCJpoY8FIOQJrMLw..vkr/0x2cLx7xgOhlaa./Kgf1ZkQJLz6';
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
-
-// State
-let rankedBooks = JSON.parse(localStorage.getItem('beli_ranked_books')) || [];
-let wishlistBooks = JSON.parse(localStorage.getItem('beli_wishlist_books')) || [];
-let pendingBook = null;
-let binarySearch = { low: 0, high: 0, mid: 0 };
-let currentDetailBookIndex = null;
-let currentDetailType = null; // 'ranked' or 'wishlist'
-let activeTab = 'rankings';
-let isSyncing = false;
-
-// DOM Elements
-const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
-const rankingsList = document.getElementById('rankings-list');
-const wishlistList = document.getElementById('wishlist-list');
-const mainView = document.getElementById('main-view');
-const comparisonView = document.getElementById('comparison-view');
-const bookDetailModal = document.getElementById('book-detail-modal');
-
-// Search debounce
-let searchTimeout = null;
-
-// Initialize
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeApp() {
     // Try to load from cloud first, fall back to localStorage
     await loadFromCloud();
     renderRankings();
     renderWishlist();
     setupEventListeners();
-});
+}
 
 // Cloud sync functions
 async function loadFromCloud() {
