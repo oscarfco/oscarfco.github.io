@@ -1,3 +1,87 @@
+// PIN Protection
+const CORRECT_PIN = '9999';
+
+// Check if already authenticated this session
+if (sessionStorage.getItem('juju_authenticated') === 'true') {
+    document.getElementById('pin-gate').classList.add('hidden');
+    document.getElementById('app-container').classList.remove('hidden');
+} else {
+    setupPinGate();
+}
+
+function setupPinGate() {
+    const pinDigits = document.querySelectorAll('.pin-digit');
+    const pinError = document.getElementById('pin-error');
+    
+    pinDigits.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            
+            // Only allow numbers
+            if (!/^\d*$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Move to next input
+            if (value && index < 3) {
+                pinDigits[index + 1].focus();
+            }
+            
+            // Check if all digits entered
+            checkPin();
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            // Handle backspace
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                pinDigits[index - 1].focus();
+            }
+        });
+        
+        // Handle paste
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+            paste.split('').forEach((char, i) => {
+                if (pinDigits[i]) {
+                    pinDigits[i].value = char;
+                }
+            });
+            checkPin();
+        });
+    });
+    
+    function checkPin() {
+        const enteredPin = Array.from(pinDigits).map(d => d.value).join('');
+        
+        if (enteredPin.length === 4) {
+            if (enteredPin === CORRECT_PIN) {
+                // Correct PIN
+                sessionStorage.setItem('juju_authenticated', 'true');
+                document.getElementById('pin-gate').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+            } else {
+                // Wrong PIN
+                pinError.classList.remove('hidden');
+                pinDigits.forEach(d => {
+                    d.value = '';
+                    d.style.borderColor = '#c44';
+                });
+                pinDigits[0].focus();
+                
+                setTimeout(() => {
+                    pinDigits.forEach(d => d.style.borderColor = '');
+                    pinError.classList.add('hidden');
+                }, 1500);
+            }
+        }
+    }
+    
+    // Focus first input
+    pinDigits[0].focus();
+}
+
 // JSONBin Configuration
 const JSONBIN_BIN_ID = '692a5ff4d0ea881f4006f223';
 const JSONBIN_API_KEY = '$2a$10$Mk1FfCJpoY8FIOQJrMLw..vkr/0x2cLx7xgOhlaa./Kgf1ZkQJLz6';

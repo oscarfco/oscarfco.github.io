@@ -10,7 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
+    <!-- PIN Gate -->
+    <div id="pin-gate" class="pin-gate">
+        <div class="pin-content">
+            <h1>🔒</h1>
+            <p>Enter PIN to access</p>
+            <div class="pin-inputs">
+                <input type="password" maxlength="1" class="pin-digit" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                <input type="password" maxlength="1" class="pin-digit" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="password" maxlength="1" class="pin-digit" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                <input type="password" maxlength="1" class="pin-digit" data-index="3" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <p id="pin-error" class="pin-error hidden">Incorrect PIN</p>
+        </div>
+    </div>
+
+    <div class="app-container hidden" id="app-container">
         <header>
             <h1>Juju Reads</h1>
             <p class="tagline">Check out what I've been reading!</p>
