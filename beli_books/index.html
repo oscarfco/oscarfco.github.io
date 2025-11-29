@@ -105,9 +105,28 @@
                     </div>
                 </div>
                 <div class="review-section" id="review-section">
-                    <label for="review-textarea">Your Review</label>
-                    <textarea id="review-textarea" placeholder="Write your thoughts about this book..."></textarea>
-                    <button class="save-review-btn" id="save-review-btn">Save Review</button>
+                    <label>Your Review</label>
+                    
+                    <!-- Read-only view -->
+                    <div id="review-display" class="review-display">
+                        <p id="review-text" class="review-text"></p>
+                        <button class="edit-review-btn" id="edit-review-btn">Edit Review</button>
+                    </div>
+                    
+                    <!-- Empty state -->
+                    <div id="review-empty" class="review-empty hidden">
+                        <p>No review yet</p>
+                        <button class="add-review-btn" id="add-review-btn">Add Review</button>
+                    </div>
+                    
+                    <!-- Edit view -->
+                    <div id="review-edit" class="review-edit hidden">
+                        <textarea id="review-textarea" placeholder="Write your thoughts about this book..."></textarea>
+                        <div class="review-edit-actions">
+                            <button class="cancel-review-btn" id="cancel-review-btn">Cancel</button>
+                            <button class="save-review-btn" id="save-review-btn">Save</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="modal-actions">

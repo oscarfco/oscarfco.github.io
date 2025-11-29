@@ -216,12 +216,17 @@ function setupEventListeners() {
     // Modal controls
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.querySelector('.modal-backdrop').addEventListener('click', closeModal);
-    document.getElementById('save-review-btn').addEventListener('click', saveReview);
     document.getElementById('delete-book-btn').addEventListener('click', showDeleteConfirm);
     document.getElementById('confirm-cancel').addEventListener('click', hideDeleteConfirm);
     document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
     document.getElementById('rerank-btn').addEventListener('click', rerankBook);
     document.getElementById('move-to-rankings-btn').addEventListener('click', moveToRankings);
+    
+    // Review controls
+    document.getElementById('add-review-btn').addEventListener('click', showReviewEdit);
+    document.getElementById('edit-review-btn').addEventListener('click', showReviewEdit);
+    document.getElementById('cancel-review-btn').addEventListener('click', hideReviewEdit);
+    document.getElementById('save-review-btn').addEventListener('click', saveReview);
 }
 
 function switchTab(tabName) {
@@ -525,7 +530,9 @@ function openBookDetail(index, type) {
         reviewSection.style.display = 'block';
         rerankBtn.classList.remove('hidden');
         moveBtn.classList.add('hidden');
-        document.getElementById('review-textarea').value = book.review || '';
+        
+        // Set up review state
+        updateReviewDisplay(book.review);
     } else {
         detailMeta.style.display = 'none';
         reviewSection.style.display = 'none';
@@ -547,6 +554,47 @@ function openBookDetail(index, type) {
     document.body.style.overflow = 'hidden';
 }
 
+function updateReviewDisplay(review) {
+    const reviewDisplay = document.getElementById('review-display');
+    const reviewEmpty = document.getElementById('review-empty');
+    const reviewEdit = document.getElementById('review-edit');
+    const reviewText = document.getElementById('review-text');
+    
+    // Hide edit mode
+    reviewEdit.classList.add('hidden');
+    
+    if (review && review.trim()) {
+        // Show display mode with review text
+        reviewText.textContent = review;
+        reviewDisplay.classList.remove('hidden');
+        reviewEmpty.classList.add('hidden');
+    } else {
+        // Show empty state
+        reviewDisplay.classList.add('hidden');
+        reviewEmpty.classList.remove('hidden');
+    }
+}
+
+function showReviewEdit() {
+    const book = rankedBooks[currentDetailBookIndex];
+    const reviewDisplay = document.getElementById('review-display');
+    const reviewEmpty = document.getElementById('review-empty');
+    const reviewEdit = document.getElementById('review-edit');
+    const reviewTextarea = document.getElementById('review-textarea');
+    
+    reviewDisplay.classList.add('hidden');
+    reviewEmpty.classList.add('hidden');
+    reviewEdit.classList.remove('hidden');
+    
+    reviewTextarea.value = book.review || '';
+    reviewTextarea.focus();
+}
+
+function hideReviewEdit() {
+    const book = rankedBooks[currentDetailBookIndex];
+    updateReviewDisplay(book.review);
+}
+
 function closeModal() {
     bookDetailModal.classList.add('hidden');
     document.body.style.overflow = '';
@@ -561,12 +609,8 @@ function saveReview() {
     rankedBooks[currentDetailBookIndex].review = review;
     saveAndRender();
     
-    const btn = document.getElementById('save-review-btn');
-    const originalText = btn.textContent;
-    btn.textContent = 'Saved!';
-    setTimeout(() => {
-        btn.textContent = originalText;
-    }, 1000);
+    // Switch back to display mode
+    updateReviewDisplay(review);
 }
 
 function rerankBook() {

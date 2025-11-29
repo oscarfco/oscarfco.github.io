@@ -641,11 +641,79 @@ header h1 {
 .review-section label {
     display: block;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     color: var(--text-muted);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+}
+
+/* Review Display (read-only) */
+.review-display {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.review-display.hidden {
+    display: none;
+}
+
+.review-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+}
+
+.edit-review-btn,
+.add-review-btn {
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.edit-review-btn:hover,
+.add-review-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Review Empty State */
+.review-empty {
+    text-align: center;
+    padding: 24px;
+    background: var(--bg);
+    border-radius: 8px;
+}
+
+.review-empty.hidden {
+    display: none;
+}
+
+.review-empty p {
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+/* Review Edit Mode */
+.review-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.review-edit.hidden {
+    display: none;
 }
 
 #review-textarea {
@@ -660,7 +728,6 @@ header h1 {
     color: var(--text);
     resize: vertical;
     line-height: 1.6;
-    margin-bottom: 12px;
 }
 
 #review-textarea:focus {
@@ -674,15 +741,38 @@ header h1 {
     font-style: italic;
 }
 
+.review-edit-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.cancel-review-btn {
+    flex: 1;
+    padding: 12px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cancel-review-btn:hover {
+    background: var(--border);
+}
+
 .save-review-btn {
-    width: 100%;
-    padding: 14px;
+    flex: 1;
+    padding: 12px;
     background: var(--accent);
     color: white;
     border: none;
     border-radius: 8px;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s;
