@@ -7,10 +7,11 @@ const JSONBIN_BIN_ID = '692a5ff4d0ea881f4006f223';
 const JSONBIN_API_KEY = '$2a$10$Mk1FfCJpoY8FIOQJrMLw..vkr/0x2cLx7xgOhlaa./Kgf1ZkQJLz6';
 const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-// State
-let rankedBooks = JSON.parse(localStorage.getItem('beli_ranked_books')) || [];
-let wishlistBooks = JSON.parse(localStorage.getItem('beli_wishlist_books')) || [];
+// State - don't load from localStorage until after cloud check
+let rankedBooks = [];
+let wishlistBooks = [];
 let pendingBook = null;
+let dataLoaded = false;
 let binarySearch = { low: 0, high: 0, mid: 0 };
 let currentDetailBookIndex = null;
 let currentDetailType = null; // 'ranked' or 'wishlist'
@@ -111,8 +112,10 @@ function setupPinGate() {
 }
 
 async function initializeApp() {
+    // Show loading state (already in HTML)
     // Try to load from cloud first, fall back to localStorage
     await loadFromCloud();
+    dataLoaded = true;
     renderRankings();
     renderWishlist();
     setupEventListeners();
@@ -130,21 +133,27 @@ async function loadFromCloud() {
         if (response.ok) {
             const data = await response.json();
             if (data.record) {
-                // Use cloud data if it exists
-                if (data.record.rankedBooks && data.record.rankedBooks.length > 0) {
-                    rankedBooks = data.record.rankedBooks;
-                    localStorage.setItem('beli_ranked_books', JSON.stringify(rankedBooks));
-                }
-                if (data.record.wishlistBooks && data.record.wishlistBooks.length > 0) {
-                    wishlistBooks = data.record.wishlistBooks;
-                    localStorage.setItem('beli_wishlist_books', JSON.stringify(wishlistBooks));
-                }
+                // Use cloud data
+                rankedBooks = data.record.rankedBooks || [];
+                wishlistBooks = data.record.wishlistBooks || [];
+                // Update localStorage as cache
+                localStorage.setItem('beli_ranked_books', JSON.stringify(rankedBooks));
+                localStorage.setItem('beli_wishlist_books', JSON.stringify(wishlistBooks));
                 console.log('Loaded data from cloud');
+                return;
             }
         }
+        // If cloud response wasn't ok, fall back to localStorage
+        loadFromLocalStorage();
     } catch (error) {
         console.log('Could not load from cloud, using local data:', error);
+        loadFromLocalStorage();
     }
+}
+
+function loadFromLocalStorage() {
+    rankedBooks = JSON.parse(localStorage.getItem('beli_ranked_books')) || [];
+    wishlistBooks = JSON.parse(localStorage.getItem('beli_wishlist_books')) || [];
 }
 
 async function saveToCloud() {
