@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juju Reads</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Juju Reads</h1>
+            <p class="tagline">Check out what I've been reading!</p>
+        </header>
+
+        <!-- Main View: Search & Rankings -->
+        <main id="main-view">
+            <div class="search-section">
+                <input type="text" id="search-input" placeholder="Search for a book..." autocomplete="off">
+                <div id="search-results" class="search-results hidden"></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="rankings">Rankings</button>
+                <button class="tab" data-tab="wishlist">Wishlist</button>
+            </div>
+
+            <!-- Rankings Tab -->
+            <section id="rankings-tab" class="tab-content">
+                <div id="rankings-list" class="rankings-list">
+                    <p class="empty-state">No books ranked yet. Search and add your first book!</p>
+                </div>
+            </section>
+
+            <!-- Wishlist Tab -->
+            <section id="wishlist-tab" class="tab-content hidden">
+                <div id="wishlist-list" class="rankings-list">
+                    <p class="empty-state">Your wishlist is empty. Search and add books you want to read!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Comparison View -->
+        <div id="comparison-view" class="comparison-view hidden">
+            <div class="comparison-content">
+                <p class="comparison-question">Which book did you enjoy more?</p>
+                
+                <div class="comparison-books">
+                    <button class="book-choice" id="choice-new">
+                        <div class="book-cover" id="new-book-cover"></div>
+                        <span class="book-title" id="new-book-title"></span>
+                        <span class="book-author" id="new-book-author"></span>
+                    </button>
+                    
+                    <span class="vs">vs</span>
+                    
+                    <button class="book-choice" id="choice-existing">
+                        <div class="book-cover" id="existing-book-cover"></div>
+                        <span class="book-title" id="existing-book-title"></span>
+                        <span class="book-author" id="existing-book-author"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Detail Modal -->
+        <div id="book-detail-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <button class="modal-close" id="modal-close">&times;</button>
+                <div class="detail-header">
+                    <div class="detail-cover" id="detail-cover"></div>
+                    <div class="detail-info">
+                        <h2 class="detail-title" id="detail-title"></h2>
+                        <p class="detail-author" id="detail-author"></p>
+                        <div class="detail-meta">
+                            <span class="detail-rank" id="detail-rank"></span>
+                            <span class="detail-score" id="detail-score"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="review-section" id="review-section">
+                    <label for="review-textarea">Your Review</label>
+                    <textarea id="review-textarea" placeholder="Write your thoughts about this book..."></textarea>
+                    <button class="save-review-btn" id="save-review-btn">Save Review</button>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="action-btn rerank-btn" id="rerank-btn">Re-rank This Book</button>
+                    <button class="action-btn move-to-rankings-btn hidden" id="move-to-rankings-btn">Move to Rankings</button>
+                </div>
+                
+                <button class="delete-book-btn" id="delete-book-btn">Remove</button>
+                
+                <!-- Delete Confirmation -->
+                <div id="delete-confirm" class="delete-confirm hidden">
+                    <p class="delete-confirm-text">Are you sure you want to remove this book?</p>
+                    <div class="delete-confirm-actions">
+                        <button class="confirm-cancel" id="confirm-cancel">Cancel</button>
+                        <button class="confirm-delete" id="confirm-delete">Yes, Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
