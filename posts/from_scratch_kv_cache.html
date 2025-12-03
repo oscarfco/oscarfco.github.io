@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 From Scratch: KV Cache - Oscar's Blog</title>
+    <meta name="description" content="A deep dive into implementing the KV Cache from scratch, exploring how this elegant engineering trick makes modern LLM inference practical and fast.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <!-- MathJax Configuration -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <!-- MathJax CDN -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="../js/components.js"></script>
+    
+    <!-- Custom styles for this post -->
+    <style>
+        /* Reduce code block text size to 80% */
+        .single-post pre code {
+            font-size: 0.8em !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <a href="../index.html" class="site-title">Oscar's Blog</a>
+            <nav>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../blog.html">Blog</a></li>
+                    <li><a href="../projects.html">Projects</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Single Post -->
+    <article class="single-post">
+        <div class="container">
+            <header class="single-post-header">
+                <div class="post-date">Nov 1, 2025</div>
+                <h1 class="single-post-title">🔧 From Scratch: KV Cache</h1>
+                <div class="post-meta">by Oscar O'Rahilly in From Scratch</div>
+            </header>
+            
+            <div class="single-post-content">
+                <h2>Introduction</h2>
+                <p>Recently, I've been really into building things from scratch. I revisited my old Transformers from scratch project and coded up another transformer implementation, where I built every part of the training pipeline from scratch, including all the transformer modules, the optimizer, the dataloaders, and the loss functions. With this new implementation, I thought it would be fun to code up the KV Cache and integrate it into my transformer.</p>
+                
+                <p>The KV Cache is one of those elegant engineering tricks that makes modern LLM inference practical. It's simple in concept but has massive real-world impact, allowing your favourite transformer-based models, like ChatGPT and Claude, to generate text much faster while using far less compute.</p>
+                
+                <p>This post will walk you through that implementation. Like most of my posts, I'll also give a short walkthrough of what the KV Cache is (in case you're unfamiliar or just forgot) and share some analysis of the inference-time speed gains I observed in my implementation.</p>
+
+                <h2>What is the KV Cache?</h2>
+                <p>The KV Cache (Key, Value cache) is a data structure that stores the intermediate keys and values of previously generated token positions during inference. The purpose of the KV Cache is to avoid recomputing objects that were already calculated, which leads to much faster generation speed at inference.</p>
+                
+                <p>Typically, each attention module within a transformer layer maintains its own KV cache, storing one key and one value per token position. For example, if you have generated five tokens so far, each attention module will store a cache containing five sets of key and value tensors.</p>
+                
+                <p>During each forward pass, every attention module will compute a new query, key and value vector (corresponding to the latest input) and then use those objects along with the previously computed Keys and Values from the cache to complete the attention operation. After the attention module has produced its outputs, the cache can then be updated with the most recently computed key and value vectors.</p>
+
+                <h2>KV Cache: Deeper Dive</h2>
+                <p>Each transformer block contains a multi-headed attention module. This layer transforms the input by running several attention heads in parallel, each learning different patterns of relationships between tokens. For every head, we compute three matrices: Queries (Q), Keys (K), and Values (V), by applying separate linear projections to the input (see diagram below).</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/kqv_projection.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 75%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>Query, Key, Value Projection in Multi-Headed Attention</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>Once we have Q, K, and V, we plug them into the standard attention formula:</p>
+                
+                <div class="math-block">
+                    \[\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V\]
+                </div>
+
+                <p>During training this works perfectly because we have access to the entire input sequence at once. Every token can attend to every other token in parallel, and all the attention scores are computed together.</p>
+                
+                <p>Inference, however, is different. When generating text, the model produces one token at a time. Each new token must attend to all tokens that came before it, so we need to run a forward pass for every generated token. In a naive implementation, this means recomputing all the Keys and Values from previous steps each time, even though they never change.</p>
+
+                <p>To illustrate this a bit better, let's walk through an example. Say we are interested in generating some Christmas stories.</p>
+
+                <figure class="post-figure" style="padding-top: 36px; padding-bottom: 36px;">
+                    <img src="../imgs/kv_cache/twas_the_night.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 80%; border-radius: 8px; background: #16213e;">
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>In order to compute attention during the forward pass, we need to generate the query for the final token as well as the keys and values for all tokens.</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/naive_qkv.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 80%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>Query, Key, Value Projection in Multi-Headed Attention</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>This however, is repeating a lot of work! In all previous timestep generations, we have already generated the key and value vector for that timestep.</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/redundant.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 80%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>Query, Key, Value Projection in Multi-Headed Attention</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>The insight behind the KV Cache is that we can store a cache of keys and values generated at previous timestamps so we don't have to repeat the work. Then at timestamp t, we only have to compute the query, key and value corresponding to the final token (the token we want to generate next).</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/kv_cache_only.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 80%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>Query, Key, Value Projection in Multi-Headed Attention</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>Then we simply finish off computing the attention formula:</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/attn_diagram.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 100%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>Query, Key, Value Projection in Multi-Headed Attention</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <div class="callout">
+                    <h4>Note 📄</h4>
+                    <p>There is a scaling factor applied to the QK<sup>T</sup> computation but I didn't include it above to make the visualization easier to follow.</p>
+                </div>
+
+                <h2>KV Cache Speed Up: Results</h2>
+                <p>To show you how this affects the speed of generation of a Language model I have plotted a graph showing the time it takes to perform each forward pass for 2000 tokens on my transformer implementation (think of this as roughly 1500 words).</p>
+
+                <figure class="post-figure">
+                    <img src="../imgs/kv_cache/kv_cache_comparison.png" alt="Q, K, V Projection Diagram" style="display: block; margin: 0 auto; max-width: 60%; border-radius: 8px; background: #16213e;">
+                    <figcaption><em>KV Cache Inference Speed Comparison</em></figcaption>
+                </figure>
+                <div class="figure-spacer"></div>
+
+                <p>As you can see, in the naive implementation, the longer the sequence length becomes, the slower it takes to generate the next token, whereas the KV Cache implementation is almost completely unaffected.</p>
+
+                <p>I ran these tests on my custom transformer using my laptop's CPU with a batch size of 1 and varying sequence lengths up to 2000. Before I started timing each forward pass I ran 5 warmup iterations. You can think of this experiment as a small-scale replica of what happens in real LLM inference pipelines like vLLM or PyTorch's <code>generate()</code> API.</p>
+
+                <h2>Implementing the KV Cache</h2>
+                <p>Once you understand how the KV Cache works, implementing it is remarkably straightforward. Below is my implementation of the class. It includes two simple methods:</p>
+
+                <ul>
+                    <li><code>update()</code>, which takes the newly computed Key and Value vectors at timestep t and adds them to the cache</li>
+                    <li><code>get_cache()</code>, which retrieves the cached Keys and Values</li>
+                </ul>
+
+                <pre><code class="language-python line-numbers"> 1  class KVCache:
+ 2      def __init__(self):
+ 3          self.key_cache = None
+ 4          self.value_cache = None
+ 5      
+ 6      def update(self, new_keys, new_values):
+ 7          """
+ 8          Append new keys and values to the cache.
+ 9          
+10          Args:
+11              new_keys: Tensor of shape (batch_size, num_heads, seq_len, head_dim)
+12              new_values: Tensor of shape (batch_size, num_heads, seq_len, head_dim)
+13          """
+14          if self.key_cache is None:
+15              self.key_cache = new_keys
+16              self.value_cache = new_values
+17          else:
+18              self.key_cache = torch.cat([self.key_cache, new_keys], dim=2)
+19              self.value_cache = torch.cat([self.value_cache, new_values], dim=2)
+20      
+21      def get_cache(self):
+22          """Return the current cached keys and values."""
+23          return self.key_cache, self.value_cache
+24      
+25      def clear(self):
+26          """Reset the cache."""
+27          self.key_cache = None
+28          self.value_cache = None</code></pre>
+
+                <p>In my implementation, I add the cache handling inside the forward pass of each attention block, right after computing Q, K, and V. Since this only runs at inference time, you should also ensure that gradients are not tracked for the cache tensors.</p>
+
+                <p>All that's left is to integrate this class into your attention implementation, and you're good to go.</p>
+
+                <h2>Use of the KV Cache</h2>
+                <p>Every LLM that you interact with will make use of the KV Cache—that's how they are able to stream output text so quickly. That being said, I wanted to highlight a use case that I thought was particularly cool.</p>
+
+                <p>In <a href="https://www.youtube.com/watch?v=oFfVt3S51T4" target="_blank" rel="noopener noreferrer">this clip</a> (first 1 minute), one of the founders of Cursor mentions that when you start typing in text into the Cursor input box, they immediately start computing the KV cache, so that when you click enter, text generation happens almost instantaneously.</p>
+
+                <h2>Acknowledgements</h2>
+                <p>I want to highlight <a href="https://www.youtube.com/watch?v=80bIUggRJf4" target="_blank" rel="noopener noreferrer">this great video</a> on the KV Cache. This creator makes other excellent videos on language models, so definitely check him out.</p>
+
+                <p>Also, a big shoutout to Stanford's <a href="https://stanford-cs336.github.io/spring2024/" target="_blank" rel="noopener noreferrer">CS336: Language Models from Scratch</a> course. This class is absolutely phenomenal—the effort that went into each assignment is unbelievable, and I highly, highly recommend it to anyone who wants to challenge themselves. I wish this had been offered when I was there.</p>
+            </div>
+            
+            <!-- Post Navigation -->
+            <div id="post-navigation-container">
+                <!-- Navigation will be dynamically generated here -->
+            </div>
+        </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="social-links">
+                <a href="https://github.com/oscarfco" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/oscar-orahilly/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </div>
+            <div class="copyright">
+                © 2025 Oscar's Blog. 
+                Website built completely from scratch by me (and ChatGPT 😁)
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script>
+        // Generate post navigation when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            generatePostNavigation('from_scratch_kv_cache');
+        });
+    </script>
+</body>
+</html>
+

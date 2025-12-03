@@ -1,5 +1,12 @@
 [
   {
+    "date": "2025-12-03",
+    "title": "🔧 From Scratch: KV Cache",
+    "slug": "from_scratch_kv_cache",
+    "excerpt": "A deep dive into implementing the KV Cache from scratch, exploring how this elegant engineering trick makes modern LLM inference practical and fast. Includes performance analysis and real-world implementation details.",
+    "category": "From Scratch"
+  },
+  {
     "date": "2025-08-29",
     "title": "🔍 Confidence Calibration: What Really Drives AI Uncertainty?",
     "slug": "confidence_calibration_ai_uncertainty",
