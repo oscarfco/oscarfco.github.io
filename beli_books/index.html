@@ -27,9 +27,30 @@
 
     <div class="app-container hidden" id="app-container">
         <header>
-            <h1>Juju Reads</h1>
-            <p class="tagline">Check out what I've been reading!</p>
+            <div class="header-row">
+                <div>
+                    <h1>Juju Reads</h1>
+                    <p class="tagline">Check out what I've been reading!</p>
+                </div>
+                <button class="whats-new-btn" id="whats-new-btn" title="What's New">?</button>
+            </div>
         </header>
+        
+        <!-- What's New Modal -->
+        <div class="whats-new-modal hidden" id="whats-new-modal">
+            <div class="whats-new-content">
+                <button class="whats-new-close" id="whats-new-close">&times;</button>
+                <h2>✨ What's New</h2>
+                <ul class="whats-new-list">
+                    <li><strong>Year Filtering</strong> — Filter your rankings and stats by year (2025, 2024, etc.)</li>
+                    <li><strong>Goodreads Integration</strong> — See Goodreads ratings and AI-summarized reviews for each book</li>
+                    <li><strong>Reading Stats Dashboard</strong> — Track total books, pages, words, reading hours, and more</li>
+                    <li><strong>Taste Comparison</strong> — See how your rankings compare to Goodreads using Spearman's correlation</li>
+                    <li><strong>Show GR Rating Toggle</strong> — Quick toggle to show Goodreads ratings inline on your rankings</li>
+                    <li><strong>Improved UI</strong> — Cleaner design with better year selection and comparison badges</li>
+                </ul>
+            </div>
+        </div>
 
         <!-- Main View: Search & Rankings -->
         <main id="main-view">
@@ -42,10 +63,21 @@
             <div class="tabs">
                 <button class="tab active" data-tab="rankings">Rankings</button>
                 <button class="tab" data-tab="wishlist">Wishlist</button>
+                <button class="tab" data-tab="stats">Stats</button>
             </div>
 
             <!-- Rankings Tab -->
             <section id="rankings-tab" class="tab-content">
+                <div class="rankings-controls">
+                    <select id="year-filter-dropdown" class="year-filter-dropdown">
+                        <option value="all">All Time</option>
+                    </select>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="show-gr-toggle">
+                        <span class="toggle-text">Show GR Rating</span>
+                    </label>
+                </div>
+                
                 <div id="rankings-list" class="rankings-list">
                     <div class="loading-state">
                         <div class="spinner"></div>
@@ -63,7 +95,90 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Stats Tab -->
+            <section id="stats-tab" class="tab-content hidden">
+                <div class="stats-dashboard">
+                    <!-- Stats Year Filter -->
+                    <div class="stats-year-filter">
+                        <select id="stats-year-dropdown" class="stats-year-dropdown">
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Hero Stats -->
+                    <div class="stats-hero">
+                        <div class="hero-stat">
+                            <span class="hero-value" id="stat-total-books">0</span>
+                            <span class="hero-label">Books Read</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid-3">
+                        <div class="stat-card-mini">
+                            <span class="stat-icon">📄</span>
+                            <span class="stat-value" id="stat-total-pages">0</span>
+                            <span class="stat-label">Pages</span>
+                        </div>
+                        <div class="stat-card-mini">
+                            <span class="stat-icon">📝</span>
+                            <span class="stat-value" id="stat-total-words">0</span>
+                            <span class="stat-label">Words</span>
+                        </div>
+                        <div class="stat-card-mini">
+                            <span class="stat-icon">⏱️</span>
+                            <span class="stat-value" id="stat-reading-hours">0</span>
+                            <span class="stat-label">Hours</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid-2">
+                        <div class="stat-card-accent">
+                            <span class="stat-value" id="stat-avg-gr-rating">0</span>
+                            <span class="stat-label">Avg GR Rating</span>
+                        </div>
+                        <div class="stat-card-accent">
+                            <span class="stat-value" id="stat-unique-authors">0</span>
+                            <span class="stat-label">Authors</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>📅 By Year</h3>
+                        <div id="stats-by-year" class="stats-by-year"></div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>✍️ Top Authors</h3>
+                        <div id="stats-authors" class="stats-list"></div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>📊 Your Taste vs Goodreads</h3>
+                        <div class="similarity-score-card" id="similarity-score-card">
+                            <span class="similarity-value" id="similarity-value">--</span>
+                            <span class="similarity-label">Similarity Score</span>
+                            <span class="similarity-method">(Spearman's rank correlation)</span>
+                        </div>
+                        <div class="ranking-comparison" id="ranking-comparison"></div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>📅 Books by Decade</h3>
+                        <div id="stats-decades" class="stats-tags"></div>
+                    </div>
+                </div>
+            </section>
         </main>
+
+        <!-- Year Selection Modal -->
+        <div id="year-select-modal" class="year-select-modal hidden">
+            <div class="year-select-content">
+                <h3>When did you read this book?</h3>
+                <select id="year-select-dropdown" class="year-dropdown"></select>
+                <button id="year-select-confirm" class="year-confirm-btn">Confirm</button>
+            </div>
+        </div>
 
         <!-- Comparison View -->
         <div id="comparison-view" class="comparison-view hidden">
@@ -102,6 +217,10 @@
                             <span class="detail-rank" id="detail-rank"></span>
                             <span class="detail-score" id="detail-score"></span>
                         </div>
+                        <div class="detail-year-selector" id="detail-year-selector">
+                            <span class="year-label">Year read:</span>
+                            <select id="detail-year-dropdown" class="year-dropdown-small"></select>
+                        </div>
                     </div>
                 </div>
                 <div class="review-section" id="review-section">
@@ -129,6 +248,28 @@
                     </div>
                 </div>
                 
+                <div class="goodreads-section" id="goodreads-section">
+                    <div class="goodreads-header">
+                        <span class="goodreads-logo">📚 Goodreads</span>
+                        <a id="goodreads-link" class="goodreads-view-link" href="#" target="_blank" rel="noopener">View page →</a>
+                    </div>
+                    <div id="goodreads-loading" class="goodreads-loading">
+                        <div class="spinner-small"></div>
+                        <span>Fetching reviews...</span>
+                    </div>
+                    <div id="goodreads-content" class="goodreads-content hidden">
+                        <div class="goodreads-rating">
+                            <span class="gr-stars" id="gr-stars"></span>
+                            <span class="gr-rating" id="gr-rating"></span>
+                            <span class="gr-count" id="gr-count"></span>
+                        </div>
+                        <div class="goodreads-reviews" id="goodreads-reviews"></div>
+                    </div>
+                    <div id="goodreads-error" class="goodreads-error hidden">
+                        Could not load Goodreads data
+                    </div>
+                </div>
+
                 <div class="modal-actions">
                     <button class="action-btn rerank-btn" id="rerank-btn">Re-rank This Book</button>
                     <button class="action-btn move-to-rankings-btn hidden" id="move-to-rankings-btn">Move to Rankings</button>

@@ -104,10 +104,39 @@ body {
 
 /* Header */
 header {
-    text-align: center;
     margin-bottom: 32px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-row > div {
+    text-align: center;
+    flex: 1;
+}
+
+.whats-new-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.whats-new-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 header h1 {
@@ -156,6 +185,169 @@ header h1 {
 
 .tab-content.hidden {
     display: none;
+}
+
+/* Rankings Controls */
+.rankings-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+}
+
+/* GR Toggle */
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.toggle-text {
+    font-weight: 500;
+}
+
+.toggle-label:hover .toggle-text {
+    color: var(--text);
+}
+
+/* Inline GR Rating */
+.gr-inline-rating {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+
+/* Year Filter */
+
+.year-filter-dropdown {
+    padding: 10px 16px;
+    padding-right: 36px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b6b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.year-filter-dropdown:hover {
+    border-color: var(--text-muted);
+}
+
+.year-filter-dropdown:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(196, 90, 59, 0.1);
+}
+
+/* Year Tag on Book Cards */
+.year-tag {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    background: var(--bg);
+    color: var(--text-muted);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+/* Year Selection Modal */
+.year-select-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.year-select-modal.hidden {
+    display: none;
+}
+
+.year-select-content {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.year-select-content h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text);
+}
+
+.year-dropdown {
+    width: 100%;
+    padding: 14px 18px;
+    padding-right: 40px;
+    margin-bottom: 16px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b6b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    transition: border-color 0.15s;
+}
+
+.year-dropdown:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.year-confirm-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.year-confirm-btn:hover {
+    background: var(--accent-hover);
 }
 
 /* Search Section */
@@ -424,6 +616,7 @@ header h1 {
     flex-shrink: 0;
 }
 
+
 .wishlist-book .wishlist-icon {
     color: var(--text-muted);
     font-size: 1.2rem;
@@ -619,7 +812,8 @@ header h1 {
 }
 
 .detail-rank,
-.detail-score {
+.detail-score,
+.detail-year {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -628,9 +822,50 @@ header h1 {
 }
 
 .detail-rank strong,
-.detail-score strong {
+.detail-score strong,
+.detail-year strong {
     color: var(--accent);
     font-weight: 600;
+}
+
+.detail-meta {
+    flex-wrap: wrap;
+}
+
+/* Year Selector in Detail Modal */
+.detail-year-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.detail-year-selector .year-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.year-dropdown-small {
+    padding: 8px 12px;
+    padding-right: 32px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b6b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.15s;
+}
+
+.year-dropdown-small:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 /* Review Section */
@@ -912,6 +1147,592 @@ header h1 {
     background: #a33;
 }
 
+/* Stats Dashboard */
+.stats-dashboard {
+    padding-bottom: 40px;
+}
+
+.stats-year-filter {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.stats-year-dropdown {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.stats-year-dropdown:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Hero Stats */
+.stats-hero {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-value {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+
+.hero-label {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+}
+
+/* 3-column grid */
+.stats-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.stat-card-mini {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-card-mini .stat-icon {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.stat-card-mini .stat-value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.stat-card-mini .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* 2-column grid */
+.stats-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.stat-card-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, #a8492f 100%);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-card-accent .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.stat-card-accent .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stats-section {
+    margin-bottom: 28px;
+}
+
+.stats-section h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stats-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Year Stats */
+.stats-by-year {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.year-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.year-stat-label {
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 60px;
+}
+
+.year-stat-count {
+    flex: 1;
+    color: var(--text);
+}
+
+.year-stat-pages {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Author Stats */
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.author-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.author-stat-row:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.author-rank {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.author-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.author-count {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Genre Tags */
+.stats-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.genre-tag {
+    display: inline-block;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.genre-tag small {
+    color: var(--text-muted);
+    margin-left: 2px;
+}
+
+/* Milestones */
+.milestone-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5d6 100%);
+    border: 1px solid #f0e4b8;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.milestone-icon {
+    font-size: 1.4rem;
+}
+
+.milestone-text {
+    font-weight: 500;
+    color: var(--text);
+}
+
+/* Similarity Score Card */
+.similarity-score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 16px;
+}
+
+.similarity-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+
+.similarity-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.similarity-method {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Ranking Comparison */
+.ranking-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comparison-group {
+    margin-bottom: 8px;
+}
+
+.comparison-group h4 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.comparison-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.comparison-row.positive {
+    border-left: 3px solid #4a9c5d;
+}
+
+.comparison-row.negative {
+    border-left: 3px solid var(--accent);
+}
+
+.comp-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.comp-ranks {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.rank-badge-you,
+.rank-badge-gr {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.rank-badge-you {
+    background: var(--accent);
+    color: white;
+}
+
+.rank-badge-gr {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+.rank-arrow {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Decade Tags */
+.decade-tag {
+    display: inline-block;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin: 4px;
+}
+
+.decade-tag small {
+    color: var(--text-muted);
+}
+
+.unused-fun-fact {
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #5d4037;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+/* Goodreads Summary */
+.gr-summary {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e0d5;
+}
+
+.gr-summary-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #9ca3af;
+    margin-bottom: 8px;
+}
+
+.gr-summary p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+    margin: 0;
+}
+
+/* Goodreads Section */
+.goodreads-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f7f4ef;
+    border: 1px solid #e5e0d5;
+    border-radius: 10px;
+}
+
+.goodreads-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.goodreads-logo {
+    font-weight: 600;
+    color: #553b2e;
+    font-size: 0.95rem;
+}
+
+.goodreads-view-link {
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.goodreads-view-link:hover {
+    text-decoration: underline;
+}
+
+.goodreads-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.goodreads-loading.hidden,
+.goodreads-content.hidden,
+.goodreads-error.hidden {
+    display: none;
+}
+
+.spinner-small {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.goodreads-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.gr-stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.star {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.star-empty {
+    color: #ddd;
+}
+
+.star-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    color: #f4b400;
+}
+
+.gr-rating {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.gr-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.goodreads-reviews {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gr-review {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e0d5;
+}
+
+.gr-review p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 0;
+}
+
+.gr-no-reviews {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.goodreads-error {
+    color: #996;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
 /* Responsive adjustments */
 @media (min-width: 420px) {
     .comparison-books {
@@ -938,3 +1759,87 @@ header h1 {
     }
 }
 
+/* What's New Modal */
+.whats-new-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.whats-new-modal.hidden {
+    display: none;
+}
+
+.whats-new-content {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.whats-new-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg);
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.whats-new-close:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.whats-new-content h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+}
+
+.whats-new-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.whats-new-list li {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text);
+    padding-left: 24px;
+    position: relative;
+}
+
+.whats-new-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.whats-new-list li strong {
+    color: var(--text);
+}
